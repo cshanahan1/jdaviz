@@ -152,13 +152,13 @@ class TestLoadRegions(BaseImviz_WCS_NoWCS, BaseRegionHandler):
         # This file actually will load 2 annuli
         regfile = get_pkg_data_filename('data/ds9_annulus_01.reg')
         self.imviz.load_data(regfile)
-        #assert len(self.imviz.app.data_collection) == 2  # Make sure not loaded as data
+        assert len(self.imviz.app.data_collection) == 2  # Make sure not loaded as data
 
-        # subsets = self.imviz.get_interactive_regions()
-        # subset_names = list(subsets.keys())
-        # assert subset_names == ['Subset 1', 'Subset 2']
-        # for n in subset_names:
-        #     assert isinstance(subsets[n], CircleAnnulusPixelRegion)
+        subsets = self.imviz.get_interactive_regions()
+        subset_names = list(subsets.keys())
+        assert subset_names == ['Subset 1', 'Subset 2']
+        for n in subset_names:
+            assert isinstance(subsets[n], CircleAnnulusPixelRegion)
 
     def test_photutils_pixel(self):
         my_aper = CircularAperture((5, 5), r=2)
