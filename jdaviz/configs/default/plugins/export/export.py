@@ -8,11 +8,14 @@ from jdaviz.core.registries import tray_registry
 from jdaviz.core.template_mixin import (PluginTemplateMixin, SelectPluginComponent,
                                         ViewerSelectMixin, DatasetMultiSelectMixin,
                                         SubsetSelectMixin, PluginTableSelectMixin,
+                                        PluginPlotSelectMixin,
                                         MultiselectMixin, with_spinner)
 from glue.core.message import SubsetCreateMessage, SubsetDeleteMessage, SubsetUpdateMessage
 
 from jdaviz.core.events import AddDataMessage, SnackbarMessage
 from jdaviz.core.user_api import PluginUserApi
+from specutils import Spectrum1D
+import astropy.units as u
 
 try:
     import cv2
@@ -28,7 +31,8 @@ __all__ = ['Export']
 
 @tray_registry('export', label="Export")
 class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
-             DatasetMultiSelectMixin, PluginTableSelectMixin, MultiselectMixin):
+             DatasetMultiSelectMixin, PluginTableSelectMixin, PluginPlotSelectMixin,
+             MultiselectMixin):
     """
     See the :ref:`Export Plugin Documentation <imviz-export-plot>` for more details.
 
@@ -40,20 +44,20 @@ class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
     * :meth:`~jdaviz.core.template_mixin.PluginTemplateMixin.close_in_tray`
     * ``viewer`` (:class:`~jdaviz.core.template_mixin.ViewerSelect`)
     * ``viewer_format`` (:class:`~jdaviz.core.template_mixin.SelectPluginComponent`)
+    * ``dataset`` (:class:`~jdaviz.core.template_mixin.DatasetSelect`)
+    * ``dataset_format`` (:class:`~jdaviz.core.template_mixin.SelectPluginComponent`)
+    * ``subset`` (:class:`~jdaviz.core.template_mixin.SubsetSelect`)
+    * ``subset_format`` (:class:`~jdaviz.core.template_mixin.SelectPluginComponent`)
     * ``table`` (:class:`~jdaviz.core.template_mixin.PluginTableSelect`)
+    * ``table_format`` (:class:`~jdaviz.core.template_mixin.SelectPluginComponent`)
+    * ``plot`` (:class:`~jdaviz.core.template_mixin.PluginPlotSelect`)
+    * ``plot_format`` (:class:`~jdaviz.core.teplate_mixin.SelectPluginComponent`)
     * ``filename``
     * :meth:`export`
     """
     template_file = __file__, "export.vue"
 
-    # feature flag for cone support
-    dev_dataset_support = Bool(False).tag(sync=True)  # when enabling: add entries to docstring
-
-    dev_plot_support = Bool(False).tag(sync=True)  # when enabling: add entries to docstring
     dev_multi_support = Bool(False).tag(sync=True)  # when enabling: add entries to docstring
-
-    plot_items = List().tag(sync=True)
-    plot_selected = Any().tag(sync=True)
 
     viewer_format_items = List().tag(sync=True)
     viewer_format_selected = Unicode().tag(sync=True)
@@ -64,10 +68,17 @@ class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
     subset_format_items = List().tag(sync=True)
     subset_format_selected = Unicode().tag(sync=True)
 
+    dataset_format_items = List().tag(sync=True)
+    dataset_format_selected = Unicode().tag(sync=True)
+
+    plot_format_items = List().tag(sync=True)
+    plot_format_selected = Unicode().tag(sync=True)
+
     filename = Unicode().tag(sync=True)
 
     # if selected subset is spectral or composite, display message and disable export
     subset_invalid_msg = Unicode().tag(sync=True)
+    data_invalid_msg = Unicode().tag(sync=True)
 
     # For Cubeviz movie.
     movie_enabled = Bool(False).tag(sync=True)
@@ -79,13 +90,6 @@ class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.plot = SelectPluginComponent(self,
-                                          items='plot_items',
-                                          selected='plot_selected',
-                                          multiselect='multiselect',
-                                          default_mode='empty',
-                                          manual_options=['plot-tst1', 'plot-tst2'])
 
         viewer_format_options = ['png', 'svg']
         if self.config == 'cubeviz':
@@ -114,10 +118,26 @@ class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
                                                    selected='subset_format_selected',
                                                    manual_options=subset_format_options)
 
+        dataset_format_options = ['fits']
+        self.dataset_format = SelectPluginComponent(self,
+                                                    items='dataset_format_items',
+                                                    selected='dataset_format_selected',
+                                                    manual_options=dataset_format_options)
+
+        plot_format_options = ['png', 'svg']
+        self.plot_format = SelectPluginComponent(self,
+                                                 items='plot_format_items',
+                                                 selected='plot_format_selected',
+                                                 manual_options=plot_format_options)
+
         # default selection:
         self.dataset._default_mode = 'empty'
+        self.subset._default_mode = 'empty'
         self.table._default_mode = 'empty'
+        self.plot._default_mode = 'empty'
+        self.plot.select_default()
         self.table.select_default()
+        # viewer last so that the first viewer is the default and all others are empty
         self.viewer.select_default()
         self.filename = f"{self.app.config}_export"
 
@@ -138,14 +158,12 @@ class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
         # TODO: expose export method once API is finalized
 
         expose = ['viewer', 'viewer_format',
+                  'dataset', 'dataset_format',
                   'subset', 'subset_format',
                   'table', 'table_format',
+                  'plot', 'plot_format',
                   'filename', 'export']
 
-        if self.dev_dataset_support:
-            expose += ['dataset']
-        if self.dev_plot_support:
-            expose += ['plot']
         if self.dev_multi_support:
             expose += ['multiselect']
 
@@ -187,6 +205,8 @@ class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
                 setattr(self, attr, '')
             if attr == 'subset_selected':
                 self._set_subset_not_supported_msg()
+            if attr == 'dataset_selected':
+                self._set_dataset_not_supported_msg()
 
     def _set_subset_not_supported_msg(self, msg=None):
         """
@@ -207,6 +227,16 @@ class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
         else:  # no subset selected (can be '' instead of None if previous selection made)
             self.subset_invalid_msg = ''
 
+    def _set_dataset_not_supported_msg(self, msg=None):
+        if self.dataset.selected_obj is not None:
+            data_unit = self.dataset.selected_obj.unit
+            if data_unit == u.Unit('DN/s'):
+                self.data_invalid_msg = f'Export Disabled: The unit {data_unit} could not be saved in native FITS format.'  # noqa: E501
+            else:
+                self.data_invalid_msg = ''
+        else:
+            self.data_invalid_msg = ''
+
     @with_spinner()
     def export(self, filename=None, show_dialog=None):
         """
@@ -217,19 +247,19 @@ class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
         filename : str, optional
             If not provided, plugin value will be used.
         """
-        if self.dataset.selected is not None and len(self.dataset.selected):
-            raise NotImplementedError("dataset export not yet supported")
 
-        if self.plot.selected is not None and len(self.plot.selected):
-            raise NotImplementedError("plot export not yet supported")
         if self.multiselect:
             raise NotImplementedError("batch export not yet supported")
 
         filename = filename if filename is not None else self.filename
 
         # at this point, we can assume only a single export is selected
-        if len(self.viewer.selected):
-            viewer = self.viewer.selected_obj
+        if len(self.viewer.selected) or len(self.plot.selected):
+            if len(self.viewer.selected):
+                viewer = self.viewer.selected_obj
+            else:
+                viewer = self.plot.selected_obj._obj
+
             filetype = self.viewer_format.selected
             if len(filename):
                 if not filename.endswith(filetype):
@@ -258,6 +288,15 @@ class Export(PluginTemplateMixin, ViewerSelectMixin, SubsetSelectMixin,
             if self.subset_invalid_msg != '':
                 raise NotImplementedError(f'Subset can not be exported - {self.subset_invalid_msg}')
             self.save_subset_as_region(selected_subset_label, filename)
+
+        elif len(self.dataset.selected):
+            filetype = self.dataset_format.selected
+            if not filename.endswith(filetype):
+                filename += f".{filetype}"
+            if self.data_invalid_msg != "":
+                raise NotImplementedError(f"Data can not be exported - {self.data_invalid_msg}")
+            if isinstance(self.dataset.selected_obj, Spectrum1D):
+                self.dataset.selected_obj.write(Path(filename), overwrite=True)
 
         else:
             raise ValueError("nothing selected for export")
