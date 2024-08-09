@@ -121,7 +121,7 @@ class CoordsInfo(TemplateMixin, DatasetSelectMixin):
 
     def _on_global_display_unit_changed(self, msg):
         # eventually should observe change in flux OR angle
-        if msg.axis == "flux":
+        if msg.axis == "sb":
             self.image_unit = u.Unit(msg.unit)
 
     @property

@@ -179,6 +179,7 @@ class UnitConversion(PluginTemplateMixin):
                 self.flux_unit.selected,
                 self.angle_unit.selected
             )
+            self.hub.broadcast(GlobalDisplayUnitChanged("sb", self.sb_unit_selected, sender=self))
 
             if not self.flux_unit.selected:
                 y_display_unit = self.spectrum_viewer.state.y_display_unit
@@ -260,6 +261,7 @@ class UnitConversion(PluginTemplateMixin):
 
             # and broacast that there has been a change in flux
             self.hub.broadcast(GlobalDisplayUnitChanged("flux", flux_or_sb, sender=self))
+
 
         if not check_if_unit_is_per_solid_angle(self.spectrum_viewer.state.y_display_unit):
             self.flux_or_sb_selected = 'Flux'
