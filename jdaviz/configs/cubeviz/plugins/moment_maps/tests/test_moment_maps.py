@@ -52,10 +52,10 @@ def test_user_api(cubeviz_helper, spectrum1d_cube):
 
 def test_moment_calculation(cubeviz_helper, spectrum1d_cube, tmp_path):
     if SPECUTILS_LT_1_15_1:
-        moment_unit = "Jy"
+        moment_unit = "Jy / pix2"
         moment_value_str = "+8.00000e+00"
     else:
-        moment_unit = "Jy m"
+        moment_unit = "Jy m / pix2"
         moment_value_str = "+6.40166e-10"
 
     dc = cubeviz_helper.app.data_collection
@@ -99,7 +99,7 @@ def test_moment_calculation(cubeviz_helper, spectrum1d_cube, tmp_path):
                                                       'domain': {'x': 0, 'y': 0}})
     assert flux_viewer.state.slices == (0, 0, 1)
     # Slice 0 has 8 pixels, this is Slice 1
-    assert label_mouseover.as_text() == ("Pixel x=00.0 y=00.0 Value +8.00000e+00 Jy",
+    assert label_mouseover.as_text() == (f"Pixel x=00.0 y=00.0 Value {moment_value_str} {moment_unit}",
                                          "World 13h39m59.9731s +27d00m00.3600s (ICRS)",
                                          "204.9998877673 27.0001000000 (deg)")
 
