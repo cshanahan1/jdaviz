@@ -128,7 +128,7 @@ def test_spectrum3d_parse(image_cube_hdu_obj, cubeviz_helper):
     label_mouseover = cubeviz_helper.app.session.application._tools['g-coords-info']
     label_mouseover._viewer_mouse_event(flux_viewer,
                                         {'event': 'mousemove', 'domain': {'x': 0, 'y': 0}})
-    flux_unit_str = "erg / (Angstrom s cm2)"
+    flux_unit_str = "erg / (Angstrom s cm2 pix2)"
     assert label_mouseover.as_text() == (f'Pixel x=00.0 y=00.0 Value +1.00000e+00 1e-17 {flux_unit_str}',  # noqa
                                          'World 13h41m46.5994s +26d59m58.6136s (ICRS)',
                                          '205.4441642302 26.9996148973 (deg)')
@@ -152,7 +152,7 @@ def test_spectrum3d_no_wcs_parse(cubeviz_helper):
     assert data.shape == (2, 3, 4)  # x, y, z
     assert isinstance(data.coords, PaddedSpectrumWCS)
     assert_array_equal(flux.data, 1)
-    assert flux.units == 'nJy'
+    assert flux.units == 'nJy / pix2'
 
 
 def test_spectrum1d_parse(spectrum1d, cubeviz_helper):
