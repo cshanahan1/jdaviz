@@ -116,6 +116,29 @@ def create_angle_equivalencies_list(unit):
         # this could be where force / u.pix
         return ['pix^2']
 
+def new_create_angle_equivalencies_list(solid_angle_unit):
+
+    # replace create_angle_equivalencies_list with this
+
+    # cast to unit
+    # this can be removed when we make sure every time this is called
+    # solid_angle_unit is already a string
+    if isinstance(solid_angle_unit, str):
+        solid_angle_unit = u.Unit(solid_angle_unit)
+
+    # if data is flux unit or counts, represent SB as per pixel
+    if solid_angle_unit is None:
+        equivs = ['pix']
+    # otherwise, we can convert between input solid angle unit (e.g deg**2),
+    # steradians, and pixels. This is where we can add more options in the future.
+    else:
+        unit_str = solid_angle_unit.to_string()
+        equivs = ['sr', 'pix']
+        if unit_str not in equivs:
+            equivs  = [unit_str] + equivs
+
+    return equivs
+
 
 def check_if_unit_is_per_solid_angle(unit, return_unit=False):
     """
@@ -174,6 +197,11 @@ def check_if_unit_is_per_solid_angle(unit, return_unit=False):
                 if return_unit:  # area units present and requested to be returned
                     return new_unit
                 return True  # area units present but not requested to be returned
+            # square pixel should be considered a square angle unit
+            if new_unit == u.pix * u.pix:
+                if return_unit:
+                    return new_unit
+                return True
 
     # in the case there are no area units, but return units were requested
     if return_unit:

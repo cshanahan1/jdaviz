@@ -2,7 +2,7 @@ import numpy as np
 from astropy import units as u
 from traitlets import List, Unicode, observe, Bool
 
-from jdaviz.core.events import GlobalDisplayUnitChanged
+from jdaviz.core.events import GlobalDisplayUnitChanged, SnackbarMessage
 from jdaviz.core.registries import tray_registry
 from jdaviz.core.template_mixin import (PluginTemplateMixin, UnitSelectPluginComponent,
                                         SelectPluginComponent, PluginUserApi)
@@ -157,6 +157,7 @@ class UnitConversion(PluginTemplateMixin):
         x_unit = u.Unit(self.spectral_unit.selected)
         y_unit_str = _valid_glue_display_unit(y_unit_str, self.spectrum_viewer, 'y')
         y_unit = u.Unit(y_unit_str)
+        y_unit_solid_angle = check_if_unit_is_per_solid_angle(y_unit_str, return_unit=True)
 
         if not check_if_unit_is_per_solid_angle(y_unit_str) and y_unit_str != self.flux_unit.selected:  # noqa
             flux_choices = create_flux_equivalencies_list(y_unit, x_unit)
@@ -169,8 +170,8 @@ class UnitConversion(PluginTemplateMixin):
 
         # if the y-axis is set to surface brightness,
         # untranslatable units need to be removed from the flux choices
-        if check_if_unit_is_per_solid_angle(y_unit_str):
-            updated_flux_choices = list(set(create_flux_equivalencies_list(y_unit * u.sr, x_unit))
+        if y_unit_solid_angle:
+            updated_flux_choices = list(set(create_flux_equivalencies_list(y_unit * y_unit_solid_angle, x_unit))
                                         - set(units_to_strings(self._untranslatable_units)))
             self.flux_unit.choices = updated_flux_choices
 
@@ -186,7 +187,7 @@ class UnitConversion(PluginTemplateMixin):
 
             if not self.flux_unit.selected:
                 y_display_unit = self.spectrum_viewer.state.y_display_unit
-                self.flux_unit.selected = (str(u.Unit(y_display_unit * u.sr)))
+                self.flux_unit.selected = (str(u.Unit(y_display_unit * y_unit_solid_angle)))
 
     @observe('spectral_unit_selected')
     def _on_spectral_unit_changed(self, *args):
@@ -302,16 +303,18 @@ class UnitConversion(PluginTemplateMixin):
         if not self.flux_unit.choices:
             return
 
+        solid_angle_unit = u.Unit(self.angle_unit_selected)
+
         # Surface Brightness -> Flux
         if check_if_unit_is_per_solid_angle(spec_units) and flux_or_sb == 'Flux':
-            spec_units *= u.sr
+            spec_units *= solid_angle_unit
             # update display units
             self.spectrum_viewer.state.y_display_unit = str(spec_units)
 
         # Flux -> Surface Brightness
         elif (not check_if_unit_is_per_solid_angle(spec_units)
               and flux_or_sb == 'Surface Brightness'):
-            spec_units /= u.sr
+            spec_units /= solid_angle_unit
             # update display units
             self.spectrum_viewer.state.y_display_unit = str(spec_units)
         # entered the translator when we shouldn't translate

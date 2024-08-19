@@ -21,6 +21,8 @@ from glue.core.exceptions import IncompatibleAttribute
 from glue.core.subset import SubsetState, RangeSubsetState, RoiSubsetState
 from ipyvue import watch
 
+from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
+
 __all__ = ['SnackbarQueue', 'enable_hot_reloading', 'bqplot_clear_figure',
            'standardize_metadata', 'ColorCycler', 'alpha_index', 'get_subset_type',
            'download_uri_to_path', 'flux_conversion', 'spectral_axis_conversion',
@@ -328,14 +330,18 @@ def flux_conversion(spec, values, original_units, target_units):
     eqv = u.spectral_density(spectral_values)
 
     orig_units = u.Unit(original_units)
-    orig_bases = orig_units.bases
     targ_units = u.Unit(target_units)
-    targ_bases = targ_units.bases
+
+    print('orig units', orig_units)
+    print('targ units', targ_units)
+
+    solid_angle_in_orig = check_if_unit_is_per_solid_angle(orig_units)
+    solid_angle_in_targ = check_if_unit_is_per_solid_angle(targ_units)
 
     # Ensure a spectrum passed through Spectral Extraction plugin
     if (('_pixel_scale_factor' in spec.meta) and
-            (((u.sr in orig_bases) and (u.sr not in targ_bases)) or
-             ((u.sr not in orig_bases) and (u.sr in targ_bases)))):
+            (((solid_angle_in_orig) and (not solid_angle_in_targ)) or
+             ((not solid_angle_in_orig) and (solid_angle_in_targ)))):
         # Data item in data collection does not update from conversion/translation.
         # App-wide original data units are used for conversion, original and
         # target_units dictate the conversion to take place.
@@ -353,6 +359,9 @@ def flux_conversion(spec, values, original_units, target_units):
             eqv_in = fac
 
         eqv += _eqv_pixar_sr(np.array(eqv_in))
+
+
+    # if solid angle is square pixel
 
     return (values * orig_units).to_value(targ_units, equivalencies=eqv)
 
