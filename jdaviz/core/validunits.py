@@ -162,5 +162,7 @@ def check_if_unit_is_per_solid_angle(unit):
             new_unit = u.Unit(new_unit_str)
             if new_unit.physical_type == 'solid angle':
                 return True
+            if new_unit == (u.pix * u.pix):
+                return True
 
     return False

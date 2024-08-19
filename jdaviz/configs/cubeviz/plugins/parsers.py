@@ -8,10 +8,11 @@ from astropy.io import fits
 from astropy.nddata import StdDevUncertainty
 from astropy.time import Time
 from astropy.wcs import WCS
-from specutils import Spectrum1D
+from specutils import Spectrum1D, SpectralAxis
 
 from jdaviz.configs.imviz.plugins.parsers import prep_data_layer_as_dq
 from jdaviz.core.registries import data_parser_registry
+from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
 from jdaviz.utils import standardize_metadata, PRIHDR_KEY, download_uri_to_path
 
 
@@ -430,6 +431,7 @@ def _parse_spectrum1d_3d(app, file_obj, data_label=None,
         else:
             flux = val
 
+            
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore', message='Input WCS indicates that the spectral axis is not last',
@@ -445,6 +447,10 @@ def _parse_spectrum1d_3d(app, file_obj, data_label=None,
 
             s1d = Spectrum1D(flux=flux, wcs=file_obj.wcs, meta=meta)
 
+            if attr != "mask":
+                if not check_if_unit_is_per_solid_angle(flux.unit):
+                    s1d = convert_spectrum1d_from_flux_to_flux_per_pixel(s1d)
+                
         cur_data_label = app.return_data_label(data_label, attr.upper())
         app.add_data(s1d, cur_data_label)
 
@@ -536,3 +542,58 @@ def _get_data_type_by_hdu(hdu):
     else:
         data_type = ''
     return data_type
+
+def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
+    """
+    Converts a Spectrum1D object's flux units to flux per square pixel.
+
+    This function takes a `Spectrum1D` object with flux units and converts the
+    flux (and optionally, uncertainty) to a surface brightness per square pixel 
+    (e.g., from Jy to Jy/pix**2). This is done adjusting the units of spectrum.flux
+    and (if present) spectrum.uncertainty, and creating a new `Spectrum1D`
+    object with the modified flux and uncertainty.
+
+    Parameters
+    ----------
+    spectrum : Spectrum1D
+        A `Spectrum1D` object containing flux data, which is assumed to be in 
+        flux units without any angular component in the denominator.
+
+    Returns
+    -------
+    Spectrum1D
+        A new `Spectrum1D` object with flux and uncertainty (if present) converted 
+        to units of flux per square pixel.
+    """
+
+    # convert flux, which is always populated
+    flux = getattr(spectrum, 'flux')
+    old_flux_unit = flux.unit
+    unitless_flux = flux.value
+    flux = unitless_flux * old_flux_unit / (u.pix * u.pix)
+
+    # and uncerts, if present
+    uncerts = getattr(spectrum, 'uncertainty')
+    if uncerts is not None:
+        old_uncerts_unit = uncerts.unit
+        unitless_uncerts = uncerts.array
+        uncerts = unitless_uncerts * old_uncerts_unit / (u.pix * u.pix)
+
+    # create a new spectrum 1d with all the info from the input spectrum 1d,
+    # and the flux / uncerts converted from flux to SB per square pixel
+
+    # if there is a spectral axis that is a SpectralAxis, you cant also set redshift or radial_velocity
+    spectral_axis = getattr(spectrum, 'spectral_axis', None)
+    if spectral_axis is not None:
+        if isinstance(spectral_axis, SpectralAxis):
+            redshift = None
+            radial_velocity = None
+        else:
+            redshift = spectrum.redshift
+            radial_velocity = spectrum.radial_velocity
+    
+    new_spec1d = Spectrum1D(flux=flux, spectral_axis=spectrum.spectral_axis,
+                            wcs=spectrum.wcs, velocity_convention=spectrum.velocity_convention,
+                            rest_value=spectrum.rest_value, redshift=redshift, radial_velocity=radial_velocity,
+                            bin_specification=getattr(spectrum, 'bin_specification', None), meta=spectrum.meta)
+    return new_spec1d
