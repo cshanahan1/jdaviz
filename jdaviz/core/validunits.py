@@ -104,7 +104,7 @@ def create_angle_equivalencies_list(unit):
         unit = u.Unit(unit)
         unit_str = unit.to_string()
     elif unit == 'ct':
-        return ['pix']
+        return ['pix^2']
     else:
         raise ValueError('Unit must be u.Unit, or string that can be converted into a u.Unit')
 
@@ -114,25 +114,33 @@ def create_angle_equivalencies_list(unit):
         return denom
     else:
         # this could be where force / u.pix
-        return ['pix']
+        return ['pix^2']
 
 
-def check_if_unit_is_per_solid_angle(unit):
+def check_if_unit_is_per_solid_angle(unit, return_unit=False):
     """
     Check if a given u.Unit or unit string (that can be converted to
-    a u.Unit object) represents some unit per solid angle.
+    a u.Unit object) represents some unit per solid angle. If 'return_unit'
+    is True, then the 
 
     Parameters
     ----------
     unit : str or u.Unit
         Unit object or string representation of unit.
+    return_unit : bool
+        If True, the u.Unit of the solid angle unit will
+        be returned (or None if unit is not a solid angle).
 
     Examples
     --------
     >>> check_if_unit_is_per_solid_angle('erg / (s cm^2 sr)')
     True
+    >>> check_if_unit_is_per_solid_angle('erg / (s cm^2 sr)', return_unit=True)
+    u.sr
     >>> check_if_unit_is_per_solid_angle('erg / s cm^2')
     False
+    >>> check_if_unit_is_per_solid_angle('erg / s cm^2', return_unit=True)
+    None
     >>> check_if_unit_is_per_solid_angle('Jy * sr^-1')
     True
 
@@ -151,18 +159,26 @@ def check_if_unit_is_per_solid_angle(unit):
         raise ValueError('Unit must be u.Unit, or string that can be converted into a u.Unit')
 
     if '/' in unit_str:
-        # might be comprised of several units in denom.
+        # input unit might be comprised of several units in denom. so check all.
         denom = unit_str.split('/')[-1].split()
 
-        # find all combos of one or two units, to catch cases where there are two different
-        # units of angle in the denom that might comprise a solid angle when multiplied.
+        # find all combos of one or two units, to catch cases where there are
+        # two different units of angle in the denom that might comprise a solid
+        # angle when multiplied.
         for i in [combo for length in (1, 2) for combo in itertools.combinations(denom, length)]:
-            # turn tuple of 1 or 2 units into a string, and turn that into a u.Unit to check type
+            # turn tuple of 1 or 2 units into a string, and turn that into a u.Unit
+            # to check type
             new_unit_str = ' '.join(i).translate(str.maketrans('', '', '()'))
             new_unit = u.Unit(new_unit_str)
             if new_unit.physical_type == 'solid angle':
-                return True
-            if new_unit == (u.pix * u.pix):
-                return True
+                if return_unit:  # area units present and requested to be returned
+                    return new_unit
+                return True  # area units present but not requested to be returned
 
+    # in the case there are no area units, but return units were requested
+    if return_unit:
+        return None
+
+    # and if there are no area units, and return units were NOT requested.
     return False
+
