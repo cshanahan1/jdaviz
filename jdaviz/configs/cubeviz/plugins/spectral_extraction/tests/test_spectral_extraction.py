@@ -42,6 +42,7 @@ def test_version_after_nddata_update(cubeviz_helper, spectrum1d_cube_with_uncert
     assert isinstance(spectral_cube, NDDataArray)
     assert isinstance(collapsed_cube_s1d, Spectrum1D)
 
+
     assert_allclose(
         collapsed_cube_nddata.data,
         collapsed_cube_s1d.flux.to_value(collapsed_cube_nddata.unit)

@@ -1291,18 +1291,26 @@ class Application(VuetifyTemplate, HubListener):
                 # first check the spectrum viewer y axis for any solid angle unit (i think that it
                 # will ALWAYS be in flux, but just to be sure). If no solid angle unit is found,
                 # check the flux viewer for surface brightness units
-                sv_y_solid_angle_unit = check_if_unit_is_per_solid_angle(sv_y_unit, return_unit=True)
-                
+                sv_y_angle_unit = check_if_unit_is_per_solid_angle(sv_y_unit, return_unit=True)
+
+                # check flux viewer if none in spectral viewer
+                fv_angle_unit = None
+                if not sv_y_angle_unit:
+                    fv = self.get_viewer(self._jdaviz_helper._default_flux_viewer_reference_name)
+                    fv_unit = fv.data()[0].get_object().flux.unit
+                    fv_angle_unit = check_if_unit_is_per_solid_angle(fv_unit,
+                                                                     return_unit=True)
+
+                solid_angle_unit = sv_y_angle_unit or fv_angle_unit
 
                 if axis == 'flux':
-                    if sv_y_solid_angle_unit:
-                        # TODO: this will need updating once solid-angle unit can be non-steradian
-                        return sv_y_unit * sv_y_solid_angle_unit
+                    if sv_y_angle_unit:
+                        return sv_y_unit * solid_angle_unit
                     return sv_y_unit
                 elif axis == 'sb':
                     if sv_y_solid_angle_unit:
                         return sv_y_unit
-                    return sv_y_unit / sv_y_solid_angle_unit
+                    return sv_y_unit / solid_angle_unit
             else:
                 raise ValueError(f"could not find units for axis='{axis}'")
         uc = self._jdaviz_helper.plugins.get('Unit Conversion')._obj
