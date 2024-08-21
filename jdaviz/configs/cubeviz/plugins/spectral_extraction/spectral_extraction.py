@@ -506,11 +506,13 @@ class SpectralExtraction(PluginTemplateMixin, ApertureSubsetSelectMixin,
 
             # Remove per steradian denominator
             sq_angle_unit = check_if_unit_is_per_solid_angle(collapsed_nddata.unit, return_unit=True)
-            print('sq_angle_unit', sq_angle_unit)
+
             if sq_angle_unit is not None:
 
                 # convert aperture area in steradians to the selected square angle unit
-                # for now just force this, fix later
+                # NOTE: just forcing these units for now!! this is in steradians and
+                # needs to be converted to the selected square angle unit but for now just
+                # force to correct units
                 aperture_area = self.cube.meta.get('PIXAR_SR', 1.0) * sq_angle_unit
                 
                 collapsed_nddata = collapsed_nddata.multiply(aperture_area,

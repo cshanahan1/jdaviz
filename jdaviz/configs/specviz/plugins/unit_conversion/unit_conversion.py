@@ -158,6 +158,7 @@ class UnitConversion(PluginTemplateMixin):
         y_unit_str = _valid_glue_display_unit(y_unit_str, self.spectrum_viewer, 'y')
         y_unit = u.Unit(y_unit_str)
         y_unit_solid_angle = check_if_unit_is_per_solid_angle(y_unit_str, return_unit=True)
+        print('!!!', y_unit_solid_angle)
 
         if not check_if_unit_is_per_solid_angle(y_unit_str) and y_unit_str != self.flux_unit.selected:  # noqa
             flux_choices = create_flux_equivalencies_list(y_unit, x_unit)
@@ -187,7 +188,12 @@ class UnitConversion(PluginTemplateMixin):
 
             if not self.flux_unit.selected:
                 y_display_unit = self.spectrum_viewer.state.y_display_unit
+                flux_unit_str = str(u.Unit(y_display_unit * y_unit_solid_angle))
+                print(f'y_display_unit {y_display_unit}')
+                print(f'y_unit_solid_angle {y_unit_solid_angle}')
+                print(f'flux_unit_str {flux_unit_str}')
                 self.flux_unit.selected = (str(u.Unit(y_display_unit * y_unit_solid_angle)))
+
 
     @observe('spectral_unit_selected')
     def _on_spectral_unit_changed(self, *args):
