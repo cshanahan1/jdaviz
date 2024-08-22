@@ -21,6 +21,7 @@ from jdaviz.core.registries import viewer_registry
 from jdaviz.core.marks import SpectralLine, LineUncertainties, ScatterMask, OffscreenLinesMarks
 from jdaviz.core.linelists import load_preset_linelist, get_available_linelists
 from jdaviz.core.freezable_state import FreezableProfileViewerState
+from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
 from jdaviz.configs.default.plugins.viewers import JdavizViewerMixin
 from jdaviz.utils import get_subset_type
 
@@ -572,9 +573,29 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
             u.bol, u.AB, u.ST
         ]
 
+        # get square angle from 'sb' display unit
+        # note to self: maybe add axis=angle to avoid repeating this elsewhere?
+        # something should always be returned for cubeviz/imviz since input is coerced to SB
+        sb_unit = self.jdaviz_app._get_display_unit(axis='sb')
+        solid_angle_unit = check_if_unit_is_per_solid_angle(sb_unit, return_unit = True)
+
+        # set default to u.sr if there is no solid angle in data (it wont pass the equiv. test anyway)
+        if solid_angle_unit is None:
+            solid_angle_unit = u.sr
+
         locally_defined_sb_units = [
-            unit / u.sr for unit in locally_defined_flux_units
+            unit / solid_angle_unit for unit in locally_defined_flux_units
             ]
+
+        self.session.hub.broadcast(SnackbarMessage(f"In set_plot_axes. y_unit = {y_unit}. solid_angle_unit={solid_angle_unit}", sender=self, color='error'))
+
+        # note: one switching between pix**2 and sr is enabled,
+        # this will need to be checked with a custom equivalency.
+        # between square angle and square pixel
+        # for now, angle unit is unchangable so this check will suffice
+        if solid_angle_unit == u.pix ** 2:
+            
+
 
         if any(y_unit.is_equivalent(unit) for unit in locally_defined_sb_units):
             flux_unit_type = "Surface Brightness"
@@ -588,6 +609,7 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
         else:
             # default to Flux Density for flux density or uncaught types
             flux_unit_type = "Flux density"
+        self.session.hub.broadcast(SnackbarMessage(f"flux_unit_type = {flux_unit_type}", sender=self, color='error'))
 
         # Set x axes labels for the spectrum viewer
         x_disp_unit = self.state.x_display_unit
