@@ -589,14 +589,6 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
 
         self.session.hub.broadcast(SnackbarMessage(f"In set_plot_axes. y_unit = {y_unit}. solid_angle_unit={solid_angle_unit}", sender=self, color='error'))
 
-        # note: one switching between pix**2 and sr is enabled,
-        # this will need to be checked with a custom equivalency.
-        # between square angle and square pixel
-        # for now, angle unit is unchangable so this check will suffice
-        if solid_angle_unit == u.pix ** 2:
-            
-
-
         if any(y_unit.is_equivalent(unit) for unit in locally_defined_sb_units):
             flux_unit_type = "Surface Brightness"
         elif any(y_unit.is_equivalent(unit) for unit in locally_defined_flux_units):

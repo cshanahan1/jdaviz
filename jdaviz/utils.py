@@ -384,6 +384,26 @@ def spectral_axis_conversion(values, original_units, target_units):
     eqv = u.spectral() + u.pixel_scale(1*u.pix)
     return (values * u.Unit(original_units)).to_value(u.Unit(target_units), equivalencies=eqv)
 
+def _create_square_pixel_to_square_angle_equiv(flux_unit, scale_factor=1):
+    """
+    Create and return an equivalency between flux per square pixel and flux per
+    solid angle to be able to compare and convert between units like
+    Jy/pix**2 and Jy/sr. The scale factor is assumed to be in steradians,
+    to follow the convention of the PIXAR_SR keyword.
+    """
+    pix2 = u.pix * u.pix
+    pixel_scale = scale_factor * u.sr
+
+    # the two types of units we want to define a conversion between
+    flux_solid_ang = flux_unit / u.sr
+    flux_sq_pix = flux_unit / pix2
+
+    pix_to_solid_angle_equiv = u.Equivalency([(flux_solid_ang, flux_sq_pix,
+                                               lambda x: x * scale_factor,
+                                               lambda x: x / scale_factor)])
+
+    return pix_to_solid_angle_equiv
+
 
 class ColorCycler:
     """
