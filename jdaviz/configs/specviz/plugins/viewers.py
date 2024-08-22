@@ -23,7 +23,7 @@ from jdaviz.core.linelists import load_preset_linelist, get_available_linelists
 from jdaviz.core.freezable_state import FreezableProfileViewerState
 from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
 from jdaviz.configs.default.plugins.viewers import JdavizViewerMixin
-from jdaviz.utils import get_subset_type
+from jdaviz.utils import get_subset_type, _create_square_pixel_to_square_angle_equiv
 
 __all__ = ['SpecvizProfileView']
 
@@ -556,6 +556,7 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
                 self.figure.marks = list(self.figure.marks) + [error_line_mark]
 
     def set_plot_axes(self):
+
         # Set y axes labels for the spectrum viewer
         y_display_unit = self.state.y_display_unit
         y_unit = u.Unit(y_display_unit) if y_display_unit else u.dimensionless_unscaled
@@ -577,30 +578,39 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
         # note to self: maybe add axis=angle to avoid repeating this elsewhere?
         # something should always be returned for cubeviz/imviz since input is coerced to SB
         sb_unit = self.jdaviz_app._get_display_unit(axis='sb')
-        solid_angle_unit = check_if_unit_is_per_solid_angle(sb_unit, return_unit = True)
-
-        # set default to u.sr if there is no solid angle in data (it wont pass the equiv. test anyway)
-        if solid_angle_unit is None:
-            solid_angle_unit = u.sr
-
-        locally_defined_sb_units = [
-            unit / solid_angle_unit for unit in locally_defined_flux_units
-            ]
-
-        self.session.hub.broadcast(SnackbarMessage(f"In set_plot_axes. y_unit = {y_unit}. solid_angle_unit={solid_angle_unit}", sender=self, color='error'))
-
-        if any(y_unit.is_equivalent(unit) for unit in locally_defined_sb_units):
-            flux_unit_type = "Surface Brightness"
-        elif any(y_unit.is_equivalent(unit) for unit in locally_defined_flux_units):
-            flux_unit_type = 'Flux'
-        elif y_unit.is_equivalent(u.electron / u.s) or y_unit.physical_type == 'dimensionless':
-            # electron / s or 'dimensionless_unscaled' should be labeled counts
-            flux_unit_type = "Counts"
-        elif y_unit.is_equivalent(u.W):
-            flux_unit_type = "Luminosity"
+        if sb_unit is not None:  # safeguard for configs not forced to have sb
+            solid_angle_unit = check_if_unit_is_per_solid_angle(sb_unit, return_unit=True)
         else:
-            # default to Flux Density for flux density or uncaught types
-            flux_unit_type = "Flux density"
+            solid_angle_unit = None
+
+        # self.session.hub.broadcast(SnackbarMessage(f"solid_angle_unit = {solid_angle_unit}", sender=self, color='error'))
+
+        # if theres a solid angle or pixel in the unit, it will either be a surface brightness
+        # if the numerator is a flux unit, or should be set to the catchall 'flux density' if
+        # numerator is not a flux unit
+        flux_unit_type = None
+        if solid_angle_unit is not None:
+            locally_defined_sb_units = [unit / solid_angle_unit for unit in locally_defined_flux_units]
+
+            # create equivalencies to compare between sq pix <> sq angle
+            # scale factor doesnt matter since were not converting, just comparing.
+            angle_to_pixel_equivs = [_create_square_pixel_to_square_angle_equiv(unit) for unit in locally_defined_flux_units]
+
+            if any([y_unit.is_equivalent(unit, angle_to_pixel_equivs[i]) for i, unit in enumerate(locally_defined_sb_units)]):
+                flux_unit_type = "Surface Brightness"
+
+        if flux_unit_type is None:  # if a label of SB or Flux density wasn't determined
+            if any(y_unit.is_equivalent(unit) for unit in locally_defined_flux_units):
+                flux_unit_type = 'Flux'
+            elif y_unit.is_equivalent(u.electron / u.s) or y_unit.physical_type == 'dimensionless':
+                # electron / s or 'dimensionless_unscaled' should be labeled counts
+                flux_unit_type = "Counts"
+            elif y_unit.is_equivalent(u.W):
+                flux_unit_type = "Luminosity"
+            else:
+                # default to Flux Density for flux density or uncaught types
+                flux_unit_type = "Flux density"
+
         self.session.hub.broadcast(SnackbarMessage(f"flux_unit_type = {flux_unit_type}", sender=self, color='error'))
 
         # Set x axes labels for the spectrum viewer

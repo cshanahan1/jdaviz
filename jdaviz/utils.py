@@ -392,7 +392,7 @@ def _create_square_pixel_to_square_angle_equiv(flux_unit, scale_factor=1):
     to follow the convention of the PIXAR_SR keyword.
     """
     pix2 = u.pix * u.pix
-    pixel_scale = scale_factor * u.sr
+    pixel_scale = scale_factor
 
     # the two types of units we want to define a conversion between
     flux_solid_ang = flux_unit / u.sr

@@ -623,4 +623,5 @@ def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
                             radial_velocity=radial_velocity,
                             bin_specification=getattr(spectrum, 'bin_specification', None),
                             meta=spectrum.meta)
+
     return new_spec1d
