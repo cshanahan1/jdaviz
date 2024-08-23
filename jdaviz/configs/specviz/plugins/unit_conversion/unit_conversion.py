@@ -285,6 +285,7 @@ class UnitConversion(PluginTemplateMixin):
             self.pixar_sr_exists = False
 
     def _translate(self, flux_or_sb=None):
+        self.hub.broadcast(SnackbarMessage(f"!in translate", sender=self, color="error"))
         # currently unsupported, can be supported with a scale factor
         if self.app.config == 'specviz':
             return
@@ -311,22 +312,32 @@ class UnitConversion(PluginTemplateMixin):
         if not self.flux_unit.choices:
             return
 
-        solid_angle_unit = u.Unit(self.angle_unit_selected)
+        selected_display_solid_angle_unit = u.Unit(self.angle_unit_selected)
+        spec_axis_ang_unit = check_if_unit_is_per_solid_angle(spec_units)
+
+        # if the selected solid angle unit is square pixels,
+        # spectrum_viewer.state.y_display_unit doesn't understand units per sq pix.
+        # because converting betweet sq pix <> sq angle is not yet enabled, 
+
+        if selected_display_solid_angle_unit == u.pix**2:
+
+
 
         # Surface Brightness -> Flux
-        if check_if_unit_is_per_solid_angle(spec_units) and flux_or_sb == 'Flux':
-            spec_units *= solid_angle_unit
+        if spec_axis_ang_unit and flux_or_sb == 'Flux':
+
+            spec_units *= selected_display_solid_angle_unit
             # update display units
             self.spectrum_viewer.state.y_display_unit = str(spec_units)
 
         # Flux -> Surface Brightness
-        elif (not check_if_unit_is_per_solid_angle(spec_units)
-              and flux_or_sb == 'Surface Brightness'):
-            spec_units /= solid_angle_unit
+        elif (not spec_axis_ang_unit and flux_or_sb == 'Surface Brightness'):
+            spec_units /= selected_display_solid_angle_unit
             # update display units
             self.spectrum_viewer.state.y_display_unit = str(spec_units)
         # entered the translator when we shouldn't translate
         else:
+
             return
 
         # broadcast that there has been a change in the spectrum viewer y axis,
@@ -348,8 +359,10 @@ class UnitConversion(PluginTemplateMixin):
         ]
 
     def _append_angle_correctly(self, flux_unit, angle_unit):
-        if angle_unit not in ['pix', 'sr']:
+
+        if angle_unit not in ['pix2', 'sr']:  # need to update this to be more flexible for solid angle or square pixel units
             self.sb_unit_selected = flux_unit
+            self.hub.broadcast(SnackbarMessage(f"returninggg", sender=self, color="error"))
             return flux_unit
         if '(' in flux_unit:
             pos = flux_unit.rfind(')')

@@ -332,7 +332,7 @@ def flux_conversion(spec, values, original_units, target_units):
     orig_units = u.Unit(original_units)
     targ_units = u.Unit(target_units)
 
-    print(f'in flux_conversion orig units={orig_units}, targ_units={targ_units}')
+    #print(f'in flux_conversion orig units={orig_units}, targ_units={targ_units}')
 
     solid_angle_in_orig = check_if_unit_is_per_solid_angle(orig_units)
     solid_angle_in_targ = check_if_unit_is_per_solid_angle(targ_units)

@@ -578,7 +578,8 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
         # note to self: maybe add axis=angle to avoid repeating this elsewhere?
         # something should always be returned for cubeviz/imviz since input is coerced to SB
         sb_unit = self.jdaviz_app._get_display_unit(axis='sb')
-        if sb_unit is not None:  # safeguard for configs not forced to have sb
+
+        if sb_unit is not None:  # need to figure out what happens in specviz here, could sb_unit be None?
             solid_angle_unit = check_if_unit_is_per_solid_angle(sb_unit, return_unit=True)
         else:
             solid_angle_unit = None
@@ -589,6 +590,10 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
         # if the numerator is a flux unit, or should be set to the catchall 'flux density' if
         # numerator is not a flux unit
         flux_unit_type = None
+
+        # self.session.hub.broadcast(SnackbarMessage(f"in viewers.py. y_unit = {y_unit}", sender=self, color='error'))
+        # self.session.hub.broadcast(SnackbarMessage(f"in viewers.py. solid_angle_unit = {solid_angle_unit}", sender=self, color='error'))
+
         if solid_angle_unit is not None:
             locally_defined_sb_units = [unit / solid_angle_unit for unit in locally_defined_flux_units]
 
@@ -610,8 +615,6 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
             else:
                 # default to Flux Density for flux density or uncaught types
                 flux_unit_type = "Flux density"
-
-        self.session.hub.broadcast(SnackbarMessage(f"flux_unit_type = {flux_unit_type}", sender=self, color='error'))
 
         # Set x axes labels for the spectrum viewer
         x_disp_unit = self.state.x_display_unit
