@@ -185,6 +185,7 @@ class UnitConversion(PluginTemplateMixin):
                 self.flux_unit.selected,
                 self.angle_unit.selected
             )
+            self.hub.broadcast(GlobalDisplayUnitChanged("sb", self.sb_unit_selected, sender=self))
 
             if not self.flux_unit.selected:
                 y_display_unit = self.spectrum_viewer.state.y_display_unit
@@ -269,6 +270,7 @@ class UnitConversion(PluginTemplateMixin):
             # to either a flux or surface brightness unit, for plugins that specifically
             # care about this toggle selection
             self.hub.broadcast(GlobalDisplayUnitChanged("spectral_y", spectral_y, sender=self))
+
 
         if not check_if_unit_is_per_solid_angle(self.spectrum_viewer.state.y_display_unit):
             self.flux_or_sb_selected = 'Flux'
