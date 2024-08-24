@@ -69,6 +69,7 @@ ALL_JDAVIZ_CONFIGS = ['cubeviz', 'specviz', 'specviz2d', 'mosviz', 'imviz']
 @unit_converter('custom-jdaviz')
 class UnitConverterWithSpectral:
     def equivalent_units(self, data, cid, units):
+
         if cid.label == "flux":
             eqv = u.spectral_density(1 * u.m)  # Value does not matter here.
             list_of_units = set(list(map(str, u.Unit(units).find_equivalent_units(
@@ -80,14 +81,23 @@ class UnitConverterWithSpectral:
                     'erg / (s cm2 Angstrom)', 'erg / (s cm2 Angstrom)',
                     'erg / (s cm2 Hz)', 'erg / (Hz s cm2)',
                     'ph / (Angstrom s cm2)',
-                    'ph / (Hz s cm2)', 'ph / (Hz s cm2)'
+                    'ph / (Hz s cm2)', 'ph / (Hz s cm2)', 
                 ]
                 + [
                     'Jy / sr', 'mJy / sr', 'uJy / sr', 'MJy / sr',
                     'W / (Hz sr m2)',
                     'eV / (Hz s sr m2)',
                     'erg / (s sr cm2)',
-                ])
+                ]
+                + [
+                    'Jy / pix2', 'mJy / pix2', 'uJy / pix2', 'MJy / pix2',
+                    'W / (Hz pix2 m2)',
+                    'eV / (Hz s pix2 m2)',
+                    'erg / (s pix2 cm2)',
+                ]
+
+                )
+
         else:  # spectral axis
             # prefer Hz over Bq and um over micron
             exclude = {'Bq', 'micron'}
@@ -101,6 +111,7 @@ class UnitConverterWithSpectral:
         # should return the converted values. Note that original_units
         # gives the units of the values array, which might not be the same
         # as the original native units of the component in the data.
+
         if cid.label == "flux":
             try:
                 spec = data.get_object(cls=Spectrum1D)

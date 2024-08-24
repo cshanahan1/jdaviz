@@ -320,6 +320,7 @@ class UnitConversion(PluginTemplateMixin):
         # because converting betweet sq pix <> sq angle is not yet enabled, 
 
         if selected_display_solid_angle_unit == u.pix**2:
+            pass
 
 
 

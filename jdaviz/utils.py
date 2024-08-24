@@ -332,7 +332,7 @@ def flux_conversion(spec, values, original_units, target_units):
     orig_units = u.Unit(original_units)
     targ_units = u.Unit(target_units)
 
-    #print(f'in flux_conversion orig units={orig_units}, targ_units={targ_units}')
+    print(f'in flux_conversion orig units={orig_units}, targ_units={targ_units}')
 
     solid_angle_in_orig = check_if_unit_is_per_solid_angle(orig_units)
     solid_angle_in_targ = check_if_unit_is_per_solid_angle(targ_units)
@@ -371,6 +371,11 @@ def _convert_surface_brightness_units(data, from_unit, to_unit):
 
 
 def _eqv_pixar_sr(pixar_sr):
+
+    """
+    Return Equivalency to convert from flux to surface brightness per solid
+    angle using scale ratio `pixar_sr` (steradians per pixel).
+    """
     def converter_flux(x):  # Surface Brightness -> Flux
         return x * pixar_sr
 
@@ -379,17 +384,49 @@ def _eqv_pixar_sr(pixar_sr):
 
     return [(u.MJy / u.sr, u.MJy, converter_flux, iconverter_flux)]
 
-
-def spectral_axis_conversion(values, original_units, target_units):
-    eqv = u.spectral() + u.pixel_scale(1*u.pix)
-    return (values * u.Unit(original_units)).to_value(u.Unit(target_units), equivalencies=eqv)
-
-def _create_square_pixel_to_square_angle_equiv(flux_unit, scale_factor=1):
+def _eqv_flux_to_sb_pixel(flux_unit):
     """
-    Create and return an equivalency between flux per square pixel and flux per
-    solid angle to be able to compare and convert between units like
-    Jy/pix**2 and Jy/sr. The scale factor is assumed to be in steradians,
+    Returns an Equivalency between `flux_unit` and `flux_unit`/pix**2. This
+    allows conversion between flux and flux-per-square-pixel surface brightness
+    e.g MJy <> MJy / pix2
+
+    Note: 
+
+    To allow conversions between units like 'ph / (Hz s cm2)' and 
+    MJy / pix2, which would require this equivalency as well as u.spectral_density,
+    these CAN'T be combined when converting like:
+    
+        equivalencies=u.spectral_density(1 * u.m) + _eqv_flux_to_sb_pixel(u.Jy)
+
+    So additional logic is needed to compare units that need both equivalencies
+    (one solution being creating this equivalency for each equivalent flux-type.)
+
+    """
+
+    pix2 = u.pix * u.pix
+
+    equiv = [(flux_unit, flux_unit / pix2, lambda x : x / pix2, lambda x : x * pix2)]
+
+    return equiv
+
+
+def _eqv_sb_per_pixel_to_per_angle(flux_unit, scale_factor=1):
+    """
+    Returns an equivalency between `flux_unit` per square pixel and
+    `flux_unit` per solid angle to be able to compare and convert between units
+    like Jy/pix**2 and Jy/sr. The scale factor is assumed to be in steradians,
     to follow the convention of the PIXAR_SR keyword.
+
+    Note: 
+
+    To allow conversions between units like 'ph / (Hz s cm2 sr)' and 
+    MJy / pix2, which would require this equivalency as well as u.spectral_density,
+    these CAN'T be combined when converting like:
+    
+    equivalencies=u.spectral_density(1 * u.m) + _eqv_sb_per_pixel_to_per_angle(u.Jy)
+
+    So additional logic is needed to compare units that need both equivalencies
+    (one solution being creating this equivalency for each equivalent flux-type.)
     """
     pix2 = u.pix * u.pix
     pixel_scale = scale_factor
@@ -403,6 +440,11 @@ def _create_square_pixel_to_square_angle_equiv(flux_unit, scale_factor=1):
                                                lambda x: x / scale_factor)])
 
     return pix_to_solid_angle_equiv
+
+
+def spectral_axis_conversion(values, original_units, target_units):
+    eqv = u.spectral() + u.pixel_scale(1*u.pix)
+    return (values * u.Unit(original_units)).to_value(u.Unit(target_units), equivalencies=eqv)
 
 
 class ColorCycler:
