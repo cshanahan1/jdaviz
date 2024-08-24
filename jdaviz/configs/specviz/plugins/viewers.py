@@ -23,7 +23,7 @@ from jdaviz.core.linelists import load_preset_linelist, get_available_linelists
 from jdaviz.core.freezable_state import FreezableProfileViewerState
 from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
 from jdaviz.configs.default.plugins.viewers import JdavizViewerMixin
-from jdaviz.utils import get_subset_type, _create_square_pixel_to_square_angle_equiv
+from jdaviz.utils import get_subset_type, _eqv_sb_per_pixel_to_per_angle
 
 __all__ = ['SpecvizProfileView']
 
@@ -597,9 +597,7 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
         if solid_angle_unit is not None:
             locally_defined_sb_units = [unit / solid_angle_unit for unit in locally_defined_flux_units]
 
-            # create equivalencies to compare between sq pix <> sq angle
-            # scale factor doesnt matter since were not converting, just comparing.
-            angle_to_pixel_equivs = [_create_square_pixel_to_square_angle_equiv(unit) for unit in locally_defined_flux_units]
+            angle_to_pixel_equivs = [_eqv_sb_per_pixel_to_per_angle(unit) for unit in locally_defined_flux_units]
 
             if any([y_unit.is_equivalent(unit, angle_to_pixel_equivs[i]) for i, unit in enumerate(locally_defined_sb_units)]):
                 flux_unit_type = "Surface Brightness"

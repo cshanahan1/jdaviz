@@ -359,8 +359,11 @@ def flux_conversion(spec, values, original_units, target_units):
 
         eqv += _eqv_pixar_sr(np.array(eqv_in))
 
-
-    # if solid angle is square pixel
+    # might need equivalencies between flux and flux per square pixel, as well
+    # as flux per square pixel and flux per square angle, depending on units
+    # being converted
+    eqv += _eqv_flux_to_sb_pixel(u.Jy)
+    eqv += _eqv_sb_per_pixel_to_per_angle(u.Jy)
 
     return (values * orig_units).to_value(targ_units, equivalencies=eqv)
 
@@ -373,8 +376,9 @@ def _convert_surface_brightness_units(data, from_unit, to_unit):
 def _eqv_pixar_sr(pixar_sr):
 
     """
-    Return Equivalency to convert from flux to surface brightness per solid
-    angle using scale ratio `pixar_sr` (steradians per pixel).
+    Return Equivalency to convert from flux to flux per solid
+    angle (aka surface brightness) using scale ratio `pixar_sr`
+    (steradians per pixel).
     """
     def converter_flux(x):  # Surface Brightness -> Flux
         return x * pixar_sr
@@ -404,8 +408,7 @@ def _eqv_flux_to_sb_pixel(flux_unit):
     """
 
     pix2 = u.pix * u.pix
-
-    equiv = [(flux_unit, flux_unit / pix2, lambda x : x / pix2, lambda x : x * pix2)]
+    equiv = [(flux_unit, flux_unit / pix2, lambda x : x, lambda x : x)]
 
     return equiv
 
