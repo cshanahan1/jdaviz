@@ -359,11 +359,12 @@ def flux_conversion(spec, values, original_units, target_units):
 
         eqv += _eqv_pixar_sr(np.array(eqv_in))
 
-    # might need equivalencies between flux and flux per square pixel, as well
-    # as flux per square pixel and flux per square angle, depending on units
-    # being converted
+    # might need equivalencies between flux and flux per square pixel
     eqv += _eqv_flux_to_sb_pixel(u.Jy)
-    eqv += _eqv_sb_per_pixel_to_per_angle(u.Jy)
+
+    # as well as between flux per square pixel and flux per square angle,
+    # once this is enabled (putting here and commenting out so i don't forget)
+    # eqv += _eqv_sb_per_pixel_to_per_angle(u.Jy)
 
     return (values * orig_units).to_value(targ_units, equivalencies=eqv)
 
@@ -393,18 +394,6 @@ def _eqv_flux_to_sb_pixel(flux_unit):
     Returns an Equivalency between `flux_unit` and `flux_unit`/pix**2. This
     allows conversion between flux and flux-per-square-pixel surface brightness
     e.g MJy <> MJy / pix2
-
-    Note: 
-
-    To allow conversions between units like 'ph / (Hz s cm2)' and 
-    MJy / pix2, which would require this equivalency as well as u.spectral_density,
-    these CAN'T be combined when converting like:
-    
-        equivalencies=u.spectral_density(1 * u.m) + _eqv_flux_to_sb_pixel(u.Jy)
-
-    So additional logic is needed to compare units that need both equivalencies
-    (one solution being creating this equivalency for each equivalent flux-type.)
-
     """
 
     pix2 = u.pix * u.pix
