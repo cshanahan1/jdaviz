@@ -359,7 +359,8 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
             else:
                 moment_new_unit = flux_or_sb_display_unit * self.spectrum_viewer.state.x_display_unit  # noqa: E501
 
-            msg = SnackbarMessage(f"moment old unit : {self.moment} moment new unit : {moment_new_unit}", sender=self, color="success")
+            msg = SnackbarMessage(f"moment old unit : {self.moment.unit} moment new unit : {moment_new_unit}", sender=self, color="success")
+            self.hub.broadcast(msg)
             self.moment = self.moment.to(moment_new_unit)
 
         # Reattach the WCS so we can load the result
