@@ -508,7 +508,7 @@ def _parse_ndarray(app, file_obj, data_label=None, data_type=None,
 
     # convert data loaded in flux units to a per-square-pixel surface
     # brightness unit (e.g Jy to Jy/pix**2)
-    if not check_if_unit_is_per_solid_angle(s3d):
+    if not check_if_unit_is_per_solid_angle(s3d.unit):
         file_obj = convert_spectrum1d_from_flux_to_flux_per_pixel(s3d)
 
     app.add_data(s3d, data_label)
