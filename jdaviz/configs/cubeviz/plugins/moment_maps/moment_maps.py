@@ -93,8 +93,6 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
     # saving client-side is supported
     export_enabled = Bool(True).tag(sync=True)
 
-    # for unit conversion, only enabled now for moment 0
-    moment_0_display_unit = Unicode().tag(sync=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -196,6 +194,7 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
             unit_dict["Spectral Unit"] = sunit
 
             sb_or_flux_label = "Surface Brightness"
+            print(f"self.app._get_display_unit('sb') {self.app._get_display_unit('sb')}")
             unit_dict["Surface Brightness"] = self.app._get_display_unit('sb')
 
         # Update units in selection item dictionary
@@ -318,7 +317,7 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
         # moment for using converted units.
         if n_moment == 0:
 
-            # get display units
+            # get display units for moment 0 based on unit conversion plugin selection
             moment_0_display_unit = self.output_unit_items[0]['unit_str']
 
             # convert unit string to Unit so moment map data can be converted
@@ -330,6 +329,7 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
             else:
                 moment_new_unit = flux_or_sb_display_unit * self.spectrum_viewer.state.x_display_unit  # noqa: E501
 
+            print(self.moment.unit, moment_new_unit)
             self.moment = self.moment.to(moment_new_unit)
 
         # Reattach the WCS so we can load the result
