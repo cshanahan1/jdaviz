@@ -17,6 +17,10 @@ from jdaviz.configs.cubeviz.plugins.moment_maps.moment_maps import SPECUTILS_LT_
 @pytest.mark.parametrize("cube_type", ["Surface Brightness", "Flux"])
 def test_user_api(cubeviz_helper, spectrum1d_cube, spectrum1d_cube_sb_unit, cube_type):
 
+    # test is parameterize to test a cube that is in Jy / sr (Surface Brightness)
+    # as well as Jy (Flux), to test that flux cubes, which are converted in the
+    # parser to flux / pix^2 surface brightness cubes, both work correctly.
+
     if cube_type == 'Surface Brightness':
         cube = spectrum1d_cube_sb_unit
     elif cube_type == 'Flux':

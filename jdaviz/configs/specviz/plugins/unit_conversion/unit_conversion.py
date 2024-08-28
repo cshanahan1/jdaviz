@@ -178,13 +178,15 @@ class UnitConversion(PluginTemplateMixin):
         # sets the angle unit drop down and the surface brightness read-only text
         if self.app.data_collection[0]:
             dc_unit = self.app.data_collection[0].get_component("flux").units
-            self.angle_unit.choices = create_angle_equivalencies_list(dc_unit)
+            # the choices for angle unit depend on the unit of the loaded cube
+            dc_solid_angle_unit = check_if_unit_is_per_solid_angle(dc_unit, return_unit=True)
+            self.angle_unit.choices = create_angle_equivalencies_list(dc_solid_angle_unit)
             self.angle_unit.selected = self.angle_unit.choices[0]
+
             self.sb_unit_selected = self._append_angle_correctly(
                 self.flux_unit.selected,
                 self.angle_unit.selected
             )
-            self.hub.broadcast(GlobalDisplayUnitChanged("sb", self.sb_unit_selected, sender=self))
 
             if not self.flux_unit.selected:
                 y_display_unit = self.spectrum_viewer.state.y_display_unit

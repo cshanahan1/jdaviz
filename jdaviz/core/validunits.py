@@ -93,51 +93,47 @@ def create_flux_equivalencies_list(flux_unit, spectral_axis_unit):
     return sorted(units_to_strings(local_units)) + flux_unit_equivalencies_titles
 
 
-def create_angle_equivalencies_list(unit):
-    # first, convert string to u.Unit obj.
-    # this will take care of some formatting consistency like
-    # turning something like Jy / (degree*degree) to Jy / deg**2
-    # and erg sr^1 to erg / sr
-    if isinstance(unit, u.core.Unit) or isinstance(unit, u.core.CompositeUnit):
-        unit_str = unit.to_string()
-    elif isinstance(unit, str):
-        unit = u.Unit(unit)
-        unit_str = unit.to_string()
-    elif unit == 'ct':
+def create_angle_equivalencies_list(solid_angle_unit):
+
+    """
+    Return valid angles that `solid_angle_unit` (which should be a solid angle
+    physical type, or square pixel), can be translated to in the unit conversion
+    plugin. These options will populate the dropdown menu for 'angle unit' in
+    the  Unit Conversion plugin.
+
+    Parameters
+    ----------
+    solid_angle_unit : str or u.Unit
+        Unit object or string representation of unit that is a 'solid angle'
+        or square pixel physical type.
+
+    Returns
+    -------
+    equivalent_angle_units : list of str
+        String representation of units that `solid_angle_unit` can be
+        translated to.
+
+    """
+
+    if solid_angle_unit is None:
+        # if there was no solid angle in the unit when calling this function
+        # can only represent that unit as per square pixel
         return ['pix^2']
-    else:
-        raise ValueError('Unit must be u.Unit, or string that can be converted into a u.Unit')
 
-    if '/' in unit_str:
-        # might be comprised of several units in denom.
-        denom = unit_str.split('/')[-1].split()
-        return denom
-    else:
-        # this could be where force / u.pix
-        return ['pix^2']
-
-def new_create_angle_equivalencies_list(solid_angle_unit):
-
-    # replace create_angle_equivalencies_list with this
-
-    # cast to unit
-    # this can be removed when we make sure every time this is called
-    # solid_angle_unit is already a string
+    # cast to unit then back to string to account for formatting inconsistencies
+    # in strings that represent units
     if isinstance(solid_angle_unit, str):
         solid_angle_unit = u.Unit(solid_angle_unit)
+    unit_str = solid_angle_unit.to_string()
 
-    # if data is flux unit or counts, represent SB as per pixel
-    if solid_angle_unit is None:
-        equivs = ['pix']
-    # otherwise, we can convert between input solid angle unit (e.g deg**2),
-    # steradians, and pixels. This is where we can add more options in the future.
-    else:
-        unit_str = solid_angle_unit.to_string()
-        equivs = ['sr', 'pix']
-        if unit_str not in equivs:
-            equivs  = [unit_str] + equivs
+    # uncomment and expand this list once translating between solid
+    # angles and between solid angle and solid pixel is enabled
+    # equivalent_angle_units = ['sr', 'pix^2']
+    equivalent_angle_units = []
+    if unit_str not in equivalent_angle_units:
+        equivalent_angle_units += [unit_str]
 
-    return equivs
+    return equivalent_angle_units
 
 
 def check_if_unit_is_per_solid_angle(unit, return_unit=False):
