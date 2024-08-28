@@ -285,7 +285,7 @@ class UnitConversion(PluginTemplateMixin):
             self.pixar_sr_exists = False
 
     def _translate(self, flux_or_sb=None):
-        self.hub.broadcast(SnackbarMessage(f"!in translate", sender=self, color="error"))
+
         # currently unsupported, can be supported with a scale factor
         if self.app.config == 'specviz':
             return
