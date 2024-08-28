@@ -285,6 +285,12 @@ def _parse_hdulist(app, hdulist, file_name=None,
 
         sc = _return_spectrum_with_correct_units(flux, wcs, metadata, data_type, hdulist=hdulist)
 
+        # convert data loaded in flux units to a per-square-pixel surface
+        # brightness unit (e.g Jy to Jy/pix**2)
+        if data_type != 'mask':
+            if not check_if_unit_is_per_solid_angle(flux_unit):
+                sc = convert_spectrum1d_from_flux_to_flux_per_pixel(sc)
+
         app.add_data(sc, data_label)
 
         if data_type == 'mask':

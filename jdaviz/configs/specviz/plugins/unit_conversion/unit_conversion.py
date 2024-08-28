@@ -363,7 +363,6 @@ class UnitConversion(PluginTemplateMixin):
 
         if angle_unit not in ['pix2', 'sr']:  # need to update this to be more flexible for solid angle or square pixel units
             self.sb_unit_selected = flux_unit
-            self.hub.broadcast(SnackbarMessage(f"returninggg", sender=self, color="error"))
             return flux_unit
         if '(' in flux_unit:
             pos = flux_unit.rfind(')')

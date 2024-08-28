@@ -226,8 +226,14 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
 
         # get angle componant of surface brightness
         # note: could add 'axis=angle' when cleaning this code up to avoid repeating this
-        # this will always return a solid angle unit because flux cubes are forced to flux/pix2
-        self.display_solid_angle_unit = check_if_unit_is_per_solid_angle(disp_unit, return_unit=True).to_string()
+
+        display_solid_angle_unit = check_if_unit_is_per_solid_angle(disp_unit, return_unit=True)
+        if display_solid_angle_unit is not None:
+            self.display_solid_angle_unit = display_solid_angle_unit.to_string()
+        else:
+            # there should always be a solid angle, but i think this is
+            # encountered sometimes when initializing something..
+            self.display_solid_angle_unit = ''
 
         # flux scaling will be applied when the solid angle componant is
         # multiplied out, so use 'flux' display unit
@@ -655,9 +661,14 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             # data units and does not need to be converted
             if ((self.config == 'cubeviz') and (flux_scaling is None) and
                     (self.flux_scaling is not None)):
-                # update eventaully to handle non-sr SB units
+                self.hub.broadcast(SnackbarMessage(f"self.flux_scaling {self.flux_scaling}, flux_scaling_display_unit {self.flux_scaling_display_unit}", sender=self, color="error"))
+
+                # image unit time square angle to get native flux units
+                img_unit_solid_angle = check_if_unit_is_per_solid_angle(img_unit, return_unit=True)
+                self.hub.broadcast(SnackbarMessage(f"img_unit {img_unit}, img_unit_solid_angle {img_unit_solid_angle}", sender=self, color="error"))
+
                 flux_scaling = (self.flux_scaling * u.Unit(self.flux_scaling_display_unit)).to_value(  # noqa: E501
-                    self.flux_scaling_display_unit, u.spectral_density(self._cube_wave))
+                    img_unit * img_unit_solid_angle, u.spectral_density(self._cube_wave))
 
             try:
                 flux_scale = float(flux_scaling if flux_scaling is not None else self.flux_scaling)
@@ -686,7 +697,14 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
 
             # convert pixarea, which is in arcsec2/pix2 to the display solid angle unit / pix2
             display_solid_angle_unit = u.Unit(self.display_solid_angle_unit)
-            pixarea_fac = PIX2 * pixarea.to(display_solid_angle_unit / PIX2)
+            
+            # im not sure what to do right now to convert arcsec**2 to pix**2, so just force units to
+            # work if that's the case and come back to this. result will be pix**2 / pix**2 so units cancel
+            if display_solid_angle_unit == PIX2:
+                pixarea_fac = 1. * PIX2
+            else:
+                pixarea_fac = PIX2 * pixarea.to(display_solid_angle_unit / PIX2)
+
             phot_table['sum'] = [rawsum * pixarea_fac]
         else:
             pixarea_fac = None
@@ -1214,7 +1232,8 @@ def _curve_of_growth(data, centroid, aperture, final_sum, wcs=None, background=0
         else:
             sum_unit = None
     if sum_unit and pixarea_fac is not None:
-        sum_unit *= pixarea_fac.unit
+        # multiply data unit by its solid angle to convert sum in sb to sum in flux
+        sum_unit *= check_if_unit_is_per_solid_angle(sum_unit, return_unit=True)
 
     if hasattr(aperture, 'to_pixel'):
         aperture = aperture.to_pixel(wcs)
@@ -1256,6 +1275,7 @@ def _curve_of_growth(data, centroid, aperture, final_sum, wcs=None, background=0
         y_label = 'Value'
     else:
         y_label = sum_unit.to_string()
+        print('sum_arr.unit', sum_arr.unit, 'sum_unit', sum_unit)
         sum_arr = sum_arr.to_value(sum_unit, equivalencies)  # bqplot does not like Quantity
 
     return x_arr, sum_arr, x_label, y_label
