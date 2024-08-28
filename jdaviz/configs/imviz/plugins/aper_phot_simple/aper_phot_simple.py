@@ -160,6 +160,7 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
         'calculate' is pressed again.
         """
 
+        print('in ap phot on display units changed')
         if self.config == 'cubeviz':
 
             # get previously selected display units

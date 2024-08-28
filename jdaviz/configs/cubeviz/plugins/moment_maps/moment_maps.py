@@ -194,7 +194,6 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
             unit_dict["Spectral Unit"] = sunit
 
             sb_or_flux_label = "Surface Brightness"
-            print(f"self.app._get_display_unit('sb') {self.app._get_display_unit('sb')}")
             unit_dict["Surface Brightness"] = self.app._get_display_unit('sb')
 
         # Update units in selection item dictionary

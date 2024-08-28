@@ -1329,6 +1329,9 @@ class Application(VuetifyTemplate, HubListener):
             # translate options from uc.flux_or_sb to the prefix used in uc.??_unit_selected
             axis = {'Surface Brightness': 'sb', 'Flux': 'flux'}[uc.flux_or_sb_selected]
         try:
+            # # why is this returning non-sb units, before plugin is fully initialized because of messaging order?
+            # if axis == 'sb':
+            #     print('getting sb from UC plugin', getattr(uc, f'{axis}_unit_selected'))
             return getattr(uc, f'{axis}_unit_selected')
         except AttributeError:
             raise ValueError(f"could not find display unit for axis='{axis}'")
