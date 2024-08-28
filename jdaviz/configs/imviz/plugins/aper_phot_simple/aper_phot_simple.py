@@ -110,10 +110,17 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             def valid_cubeviz_datasets(data):
                 comp = data.get_component(data.main_components[0])
                 img_unit = u.Unit(comp.units) if comp.units else u.dimensionless_unscaled
+                
                 acceptable_types = ['spectral flux density wav',
                                     'photon flux density wav',
                                     'spectral flux density',
                                     'photon flux density']
+
+                # if the unit is per square pixel, it won't register as one of these types
+                # so remove factor of pix2 if present (just for this filter check)
+                if check_if_unit_is_per_solid_angle(img_unit, return_unit=True) == u.pix * u.pix:
+                    img_unit *= u.pix * u.pix
+
                 return ((data.ndim in (2, 3)) and
                         ((img_unit == (u.MJy / u.sr)) or
                          (img_unit.physical_type in acceptable_types)))
@@ -160,7 +167,6 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
         'calculate' is pressed again.
         """
 
-        print('in ap phot on display units changed')
         if self.config == 'cubeviz':
 
             # get previously selected display units
@@ -203,34 +209,23 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
         surface brightness.
         """
 
+        # the refactoring done in 3144 will have the response to
+        # GlobalDisplayUnitChanged handled correctly. for now, use
+        # _get_display_unit
+
         if not self.dataset_selected or not self.aperture_selected:
             self.display_flux_or_sb_unit = ''
             self.flux_scaling_display_unit = ''
             return
 
-        data = self.dataset.selected_dc_item
-        comp = data.get_component(data.main_components[0])
-        if comp.units:
-            # if data is something-per-solid-angle, its a SB unit and we should
-            # use the selected global display unit for SB
-            if check_if_unit_is_per_solid_angle(comp.units):
-                flux_or_sb = 'sb'
-            else:
-                flux_or_sb = 'flux'
+        disp_unit = self.app._get_display_unit('sb')  # all cubes are in sb
+        self.display_flux_or_sb_unit = disp_unit
 
-            disp_unit = self.app._get_display_unit(flux_or_sb)
 
-            self.display_flux_or_sb_unit = disp_unit
+        fs_unit = self.app._get_display_unit('flux')
+        self.flux_scaling_display_unit = fs_unit
 
-            # now get display unit for flux_scaling_display_unit. this unit will always
-            # be in flux, but it will not be derived from the global flux display unit
-            # note : need to generalize this for non-sr units eventually
-            fs_unit = u.Unit(disp_unit) * u.sr
-            self.flux_scaling_display_unit = fs_unit.to_string()
 
-        else:
-            self.display_flux_or_sb_unit = ''
-            self.flux_scaling_display_unit = ''
 
     def _get_defaults_from_metadata(self, dataset=None):
         defaults = {}
@@ -654,7 +649,7 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
                     (self.flux_scaling is not None)):
                 # update eventaully to handle non-sr SB units
                 flux_scaling = (self.flux_scaling * u.Unit(self.flux_scaling_display_unit)).to_value(  # noqa: E501
-                    img_unit * u.sr, u.spectral_density(self._cube_wave))
+                    self.flux_scaling_display_unit, u.spectral_density(self._cube_wave))
 
             try:
                 flux_scale = float(flux_scaling if flux_scaling is not None else self.flux_scaling)
