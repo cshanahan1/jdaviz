@@ -27,6 +27,8 @@ from jdaviz.utils import PRIHDR_KEY
 
 __all__ = ['SimpleAperturePhotometry']
 
+PIX2 = u.pix * u.pix  # define square pixel unit which is used around the plugin
+
 
 @tray_registry('imviz-aper-phot-simple', label="Aperture Photometry")
 class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
@@ -69,6 +71,7 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
     cube_slice = Unicode("").tag(sync=True)
     is_cube = Bool(False).tag(sync=True)
     display_flux_or_sb_unit = Unicode("").tag(sync=True)
+    display_solid_angle_unit = Unicode("").tag(sync=True)
     flux_scaling_display_unit = Unicode("").tag(sync=True)
 
     def __init__(self, *args, **kwargs):
@@ -118,8 +121,8 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
 
                 # if the unit is per square pixel, it won't register as one of these types
                 # so remove factor of pix2 if present (just for this filter check)
-                if check_if_unit_is_per_solid_angle(img_unit, return_unit=True) == u.pix * u.pix:
-                    img_unit *= u.pix * u.pix
+                if check_if_unit_is_per_solid_angle(img_unit, return_unit=True) == PIX2:
+                    img_unit *= PIX2
 
                 return ((data.ndim in (2, 3)) and
                         ((img_unit == (u.MJy / u.sr)) or
@@ -221,10 +224,15 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
         disp_unit = self.app._get_display_unit('sb')  # all cubes are in sb
         self.display_flux_or_sb_unit = disp_unit
 
+        # get angle componant of surface brightness
+        # note: could add 'axis=angle' when cleaning this code up to avoid repeating this
+        # this will always return a solid angle unit because flux cubes are forced to flux/pix2
+        self.display_solid_angle_unit = check_if_unit_is_per_solid_angle(disp_unit, return_unit=True).to_string()
 
+        # flux scaling will be applied when the solid angle componant is
+        # multiplied out, so use 'flux' display unit
         fs_unit = self.app._get_display_unit('flux')
         self.flux_scaling_display_unit = fs_unit
-
 
 
     def _get_defaults_from_metadata(self, dataset=None):
@@ -485,7 +493,7 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             Background to subtract, same unit as data.  Automatically computed if ``background``
             is set to a subset.
         pixel_area : float, optional
-            Pixel area in arcsec squared, only used if sr in data unit.
+            Pixel area in arcsec squared, only used if data unit is a surface brightness unit.
         counts_factor : float, optional
             Factor to convert data unit to counts, in unit of flux/counts.
         flux_scaling : float, optional
@@ -673,11 +681,12 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
         rawsum = phot_table['sum'][0]
 
         if include_pixarea_fac:
-            pixarea = pixarea * (u.arcsec * u.arcsec / (u.pix * u.pix))
+            pixarea = pixarea * (u.arcsec * u.arcsec / PIX2)
             # NOTE: Sum already has npix value encoded, so we simply apply the npix unit here.
 
-            # note: need to generalize this to non-steradian surface brightness units
-            pixarea_fac = (u.pix * u.pix) * pixarea.to(u.sr / (u.pix * u.pix))
+            # convert pixarea, which is in arcsec2/pix2 to the display solid angle unit / pix2
+            display_solid_angle_unit = u.Unit(self.display_solid_angle_unit)
+            pixarea_fac = PIX2 * pixarea.to(display_solid_angle_unit / PIX2)
             phot_table['sum'] = [rawsum * pixarea_fac]
         else:
             pixarea_fac = None
