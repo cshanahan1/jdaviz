@@ -180,14 +180,25 @@ def _get_celestial_wcs(wcs):
 
 
 def _return_spectrum_with_correct_units(flux, wcs, metadata, data_type, target_wave_unit=None,
-                                        hdulist=None, uncertainty=None, mask=None):
+                                        hdulist=None, uncertainty=None, mask=None, apply_pix2=False):
     """Upstream issue of WCS not using the correct units for data must be fixed here.
-    Issue: https://github.com/astropy/astropy/issues/3658
+    Issue: https://github.com/astropy/astropy/issues/3658.
+
+    Also converts flux units to flux/pix2 solid angle units, if `flux` is not a surface
+    brightness and `apply_pix2` is True.
     """
     with warnings.catch_warnings():
         warnings.filterwarnings(
             'ignore', message='Input WCS indicates that the spectral axis is not last',
             category=UserWarning)
+
+        # convert flux and uncertainty to per-pix2 if input is not a surface brightness
+        if apply_pix2:
+            if not check_if_unit_is_per_solid_angle(flux.unit):
+                flux = flux / (u.pix * u.pix)
+                if uncertainty is not None:
+                    uncertainty = uncertainty / (u.pix * u.pix)
+
         sc = Spectrum1D(flux=flux, wcs=wcs, uncertainty=uncertainty, mask=mask)
 
     if target_wave_unit is None and hdulist is not None:
@@ -283,15 +294,12 @@ def _parse_hdulist(app, hdulist, file_name=None,
         # to sky regions, where the parent data of the subset might have dropped spatial WCS info
         metadata['_orig_spatial_wcs'] = _get_celestial_wcs(wcs)
 
-        sc = _return_spectrum_with_correct_units(flux, wcs, metadata, data_type, hdulist=hdulist)
+        apply_pix2 = data_type in ['flux', 'uncert']
+        sc = _return_spectrum_with_correct_units(flux, wcs, metadata, data_type, hdulist=hdulist, apply_pix2=apply_pix2)
 
-        # convert data loaded in flux units to a per-square-pixel surface
-        # brightness unit (e.g Jy to Jy/pix**2)
-        if data_type != 'mask':
-            if not check_if_unit_is_per_solid_angle(flux_unit):
-                sc = convert_spectrum1d_from_flux_to_flux_per_pixel(sc)
+        print(f'data_type {data_type}, flux_unit {flux_unit}, sc.unit {sc.unit}')
 
-        app.add_data(sc, data_label)
+        app.add_data(sc, data_label) 
 
         if data_type == 'mask':
             # We no longer auto-populate the mask cube into a viewer
@@ -303,7 +311,7 @@ def _parse_hdulist(app, hdulist, file_name=None,
 
         else:  # flux
             # Forced wave unit conversion made it lose stuff, so re-add
-            app.data_collection[data_label].get_component("flux").units = flux_unit
+            app.data_collection[data_label].get_component("flux").units = sc.unit
             # Add flux to top left image viewer
             app.add_data_to_viewer(flux_viewer_reference_name, data_label)
             app._jdaviz_helper._loaded_flux_cube = app.data_collection[data_label]
@@ -623,6 +631,7 @@ def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
     # not in init signiture that might be present in `spectrum`?
     new_spec1d = Spectrum1D(flux=flux, uncertainty=uncerts, 
                             spectral_axis=spectrum.spectral_axis,
+                            mask=spectrum.mask,
                             wcs=spectrum.wcs,
                             velocity_convention=spectrum.velocity_convention,
                             rest_value=spectrum.rest_value, redshift=redshift,

@@ -191,6 +191,7 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
                     new_unit = u.Unit(self.display_flux_or_sb_unit)
 
                     bg = self.background_value * prev_unit
+
                     self.background_value = bg.to_value(
                         new_unit, u.spectral_density(self._cube_wave))
 
@@ -661,14 +662,11 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             # data units and does not need to be converted
             if ((self.config == 'cubeviz') and (flux_scaling is None) and
                     (self.flux_scaling is not None)):
-                self.hub.broadcast(SnackbarMessage(f"self.flux_scaling {self.flux_scaling}, flux_scaling_display_unit {self.flux_scaling_display_unit}", sender=self, color="error"))
 
-                # image unit time square angle to get native flux units
-                img_unit_solid_angle = check_if_unit_is_per_solid_angle(img_unit, return_unit=True)
-                self.hub.broadcast(SnackbarMessage(f"img_unit {img_unit}, img_unit_solid_angle {img_unit_solid_angle}", sender=self, color="error"))
-
+                # convert flux_scaling from flux display unit to native flux unit
                 flux_scaling = (self.flux_scaling * u.Unit(self.flux_scaling_display_unit)).to_value(  # noqa: E501
-                    img_unit * img_unit_solid_angle, u.spectral_density(self._cube_wave))
+                                img_unit * self.display_solid_angle_unit,
+                                u.spectral_density(self._cube_wave))
 
             try:
                 flux_scale = float(flux_scaling if flux_scaling is not None else self.flux_scaling)
@@ -692,17 +690,16 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
         rawsum = phot_table['sum'][0]
 
         if include_pixarea_fac:
-            pixarea = pixarea * (u.arcsec * u.arcsec / PIX2)
-            # NOTE: Sum already has npix value encoded, so we simply apply the npix unit here.
 
             # convert pixarea, which is in arcsec2/pix2 to the display solid angle unit / pix2
             display_solid_angle_unit = u.Unit(self.display_solid_angle_unit)
             
-            # im not sure what to do right now to convert arcsec**2 to pix**2, so just force units to
-            # work if that's the case and come back to this. result will be pix**2 / pix**2 so units cancel
+            # if angle unit is pix2, pixarea should be 1 pixel2 per pixel2
             if display_solid_angle_unit == PIX2:
                 pixarea_fac = 1. * PIX2
             else:
+                pixarea = pixarea * (u.arcsec * u.arcsec / PIX2)
+                # NOTE: Sum already has npix value encoded, so we simply apply the npix unit here.
                 pixarea_fac = PIX2 * pixarea.to(display_solid_angle_unit / PIX2)
 
             phot_table['sum'] = [rawsum * pixarea_fac]
