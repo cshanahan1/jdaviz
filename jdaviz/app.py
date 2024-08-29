@@ -1307,7 +1307,10 @@ class Application(VuetifyTemplate, HubListener):
                 # check flux viewer if none in spectral viewer
                 fv_angle_unit = None
                 if not sv_y_angle_unit:
-                    fv = self.get_viewer(self._jdaviz_helper._default_flux_viewer_reference_name)
+                    if hasattr(self._jdaviz_helper, '_default_flux_viewer_reference_name'):
+                        fv = self.get_viewer(self._jdaviz_helper._default_flux_viewer_reference_name)
+                    else:  # mosviz
+                        fv = self.get_viewer(self._jdaviz_helper._default_image_viewer_reference_name)
                     fv_unit = fv.data()[0].get_object().flux.unit
                     fv_angle_unit = check_if_unit_is_per_solid_angle(fv_unit,
                                                                      return_unit=True)
