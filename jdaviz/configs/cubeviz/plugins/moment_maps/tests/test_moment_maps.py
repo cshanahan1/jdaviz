@@ -80,8 +80,7 @@ def test_moment_calculation(cubeviz_helper, spectrum1d_cube,
     elif cube_type == 'Flux':
         moment_unit += " / pix2"
         cube = spectrum1d_cube
-        cube_unit = moment_unit # cube in Jy will become cube in Jy / pix2
-
+        cube_unit = moment_unit  # cube in Jy will become cube in Jy / pix2
 
     dc = cubeviz_helper.app.data_collection
     with warnings.catch_warnings():

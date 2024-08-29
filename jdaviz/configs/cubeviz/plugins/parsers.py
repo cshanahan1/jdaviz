@@ -179,8 +179,9 @@ def _get_celestial_wcs(wcs):
     return wcs.celestial if hasattr(wcs, 'celestial') else None
 
 
-def _return_spectrum_with_correct_units(flux, wcs, metadata, data_type, target_wave_unit=None,
-                                        hdulist=None, uncertainty=None, mask=None, apply_pix2=False):
+def _return_spectrum_with_correct_units(flux, wcs, metadata, data_type,
+                                        target_wave_unit=None, hdulist=None,
+                                        uncertainty=None, mask=None, apply_pix2=False):
     """Upstream issue of WCS not using the correct units for data must be fixed here.
     Issue: https://github.com/astropy/astropy/issues/3658.
 
@@ -295,11 +296,10 @@ def _parse_hdulist(app, hdulist, file_name=None,
         metadata['_orig_spatial_wcs'] = _get_celestial_wcs(wcs)
 
         apply_pix2 = data_type in ['flux', 'uncert']
-        sc = _return_spectrum_with_correct_units(flux, wcs, metadata, data_type, hdulist=hdulist, apply_pix2=apply_pix2)
+        sc = _return_spectrum_with_correct_units(flux, wcs, metadata, data_type,
+                                                 hdulist=hdulist, apply_pix2=apply_pix2)
 
-        print(f'data_type {data_type}, flux_unit {flux_unit}, sc.unit {sc.unit}')
-
-        app.add_data(sc, data_label) 
+        app.add_data(sc, data_label)
 
         if data_type == 'mask':
             # We no longer auto-populate the mask cube into a viewer
@@ -311,7 +311,7 @@ def _parse_hdulist(app, hdulist, file_name=None,
 
         else:  # flux
             # Forced wave unit conversion made it lose stuff, so re-add
-            print('setting flux.units to', sc.unit)
+            # also re-get unit from sc in case a factor of pix2 was applied
             app.data_collection[data_label].get_component("flux").units = sc.unit
             # Add flux to top left image viewer
             app.add_data_to_viewer(flux_viewer_reference_name, data_label)
@@ -466,7 +466,7 @@ def _parse_spectrum1d_3d(app, file_obj, data_label=None,
             if attr != "mask":
                 if not check_if_unit_is_per_solid_angle(flux.unit):
                     s1d = convert_spectrum1d_from_flux_to_flux_per_pixel(s1d)
-                
+
         cur_data_label = app.return_data_label(data_label, attr.upper())
         app.add_data(s1d, cur_data_label)
 
@@ -575,12 +575,13 @@ def _get_data_type_by_hdu(hdu):
         data_type = ''
     return data_type
 
+
 def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
     """
     Converts a Spectrum1D object's flux units to flux per square pixel.
 
     This function takes a `Spectrum1D` object with flux units and converts the
-    flux (and optionally, uncertainty) to a surface brightness per square pixel 
+    flux (and optionally, uncertainty) to a surface brightness per square pixel
     (e.g., from Jy to Jy/pix**2). This is done adjusting the units of spectrum.flux
     and (if present) spectrum.uncertainty, and creating a new `Spectrum1D`
     object with the modified flux and uncertainty.
@@ -588,14 +589,14 @@ def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
     Parameters
     ----------
     spectrum : Spectrum1D
-        A `Spectrum1D` object containing flux data, which is assumed to be in 
+        A `Spectrum1D` object containing flux data, which is assumed to be in
         flux units without any angular component in the denominator.
 
     Returns
     -------
     Spectrum1D
-        A new `Spectrum1D` object with flux and uncertainty (if present) converted 
-        to units of flux per square pixel.
+        A new `Spectrum1D` object with flux and uncertainty (if present)
+        converted to units of flux per square pixel.
     """
 
     # convert flux, which is always populated
@@ -607,7 +608,7 @@ def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
     # and uncerts, if present
     uncerts = getattr(spectrum, 'uncertainty')
     if uncerts is not None:
-        old_uncerts = uncerts.represent_as(StdDevUncertainty)  # make sure they are in a common uncert type.
+        old_uncerts = uncerts.represent_as(StdDevUncertainty)  # enforce common uncert type.
         old_uncerts_unit = old_uncerts.unit
         unitless_uncerts = uncerts.array
         uncerts = unitless_uncerts * old_uncerts_unit / (u.pix * u.pix)
@@ -626,11 +627,11 @@ def convert_spectrum1d_from_flux_to_flux_per_pixel(spectrum):
         else:
             redshift = spectrum.redshift
             radial_velocity = spectrum.radial_velocity
-    
+
     # initialize new spectrum1d with new flux, uncerts, and all other init parameters
     # from old input spectrum as well as any 'meta'. any more missing information
     # not in init signiture that might be present in `spectrum`?
-    new_spec1d = Spectrum1D(flux=flux, uncertainty=uncerts, 
+    new_spec1d = Spectrum1D(flux=flux, uncertainty=uncerts,
                             spectral_axis=spectrum.spectral_axis,
                             mask=spectrum.mask,
                             wcs=spectrum.wcs,

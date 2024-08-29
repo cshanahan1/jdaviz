@@ -20,7 +20,6 @@ from jdaviz.core.template_mixin import (PluginTemplateMixin,
                                         SpectralContinuumMixin,
                                         skip_if_no_updates_since_last_active,
                                         with_spinner)
-from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
 from jdaviz.core.user_api import PluginUserApi
 
 __all__ = ['MomentMap']
@@ -93,7 +92,6 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
     # saving client-side is supported
     export_enabled = Bool(True).tag(sync=True)
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -112,8 +110,10 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
         self.output_unit = SelectPluginComponent(self,
                                                  items='output_unit_items',
                                                  selected='output_unit_selected',
-                                                 manual_options=['Surface Brightness', 'Spectral Unit',
-                                                                 'Velocity', 'Velocity^N'])
+                                                 manual_options=['Surface Brightness',
+                                                                 'Spectral Unit',
+                                                                 'Velocity',
+                                                                 'Velocity^N'])
 
         self.dataset.add_filter('is_cube')
         self.add_results.viewer.filters = ['is_image_viewer']
@@ -193,7 +193,6 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
             self.dataset_spectral_unit = sunit
             unit_dict["Spectral Unit"] = sunit
 
-            sb_or_flux_label = "Surface Brightness"
             unit_dict["Surface Brightness"] = self.app._get_display_unit('sb')
 
         # Update units in selection item dictionary

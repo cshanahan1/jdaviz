@@ -27,7 +27,6 @@ def test_version_after_nddata_update(cubeviz_helper, spectrum1d_cube_with_uncert
     assert plg._obj.disabled_msg != ''
 
     cubeviz_helper.load_data(spectrum1d_cube_with_uncerts)
-    print(spectrum1d_cube_with_uncerts)
 
     spectral_cube = cubeviz_helper.app.data_collection[0].get_object(NDDataArray)
     uncert_cube = cubeviz_helper.app.data_collection[1].get_object(StdDevUncertainty)
@@ -50,7 +49,7 @@ def test_version_after_nddata_update(cubeviz_helper, spectrum1d_cube_with_uncert
     assert isinstance(collapsed_cube_s1d, Spectrum1D)
 
     assert_allclose(
-        collapsed_cube_nddata.data ,
+        collapsed_cube_nddata.data,
         collapsed_cube_s1d.flux.to_value(collapsed_cube_nddata.unit)
     )
 
