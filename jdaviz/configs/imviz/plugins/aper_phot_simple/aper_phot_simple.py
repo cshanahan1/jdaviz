@@ -113,20 +113,24 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             def valid_cubeviz_datasets(data):
                 comp = data.get_component(data.main_components[0])
                 img_unit = u.Unit(comp.units) if comp.units else u.dimensionless_unscaled
-                
+                solid_angle_unit = check_if_unit_is_per_solid_angle(img_unit, return_unit=True)
+                if solid_angle_unit is None:  # this is encountered sometimes, not sure why.
+                    return
+
+                # multiply out solid angle so we can check physical type of numerator
+                img_unit *= solid_angle_unit
+            
                 acceptable_types = ['spectral flux density wav',
                                     'photon flux density wav',
                                     'spectral flux density',
                                     'photon flux density']
 
-                # if the unit is per square pixel, it won't register as one of these types
-                # so remove factor of pix2 if present (just for this filter check)
-                if check_if_unit_is_per_solid_angle(img_unit, return_unit=True) == PIX2:
-                    img_unit *= PIX2
+                return ((data.ndim in (2, 3)) and (img_unit.physical_type in acceptable_types))
 
-                return ((data.ndim in (2, 3)) and
-                        ((img_unit == (u.MJy / u.sr)) or
-                         (img_unit.physical_type in acceptable_types)))
+
+                # return ((data.ndim in (2, 3)) and
+                #         ((img_unit == (u.MJy / u.sr)) or
+                #          (img_unit.physical_type in acceptable_types)))
 
             self.dataset.add_filter(valid_cubeviz_datasets)
             self.session.hub.subscribe(self, SliceValueUpdatedMessage,
@@ -688,6 +692,7 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             'biweight_location', 'biweight_midvariance', 'fwhm', 'semimajor_sigma',
             'semiminor_sigma', 'orientation', 'eccentricity'))  # Some cols excluded, add back as needed.  # noqa
         rawsum = phot_table['sum'][0]
+        print('rawsum', rawsum)
 
         if include_pixarea_fac:
 
@@ -696,12 +701,14 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             
             # if angle unit is pix2, pixarea should be 1 pixel2 per pixel2
             if display_solid_angle_unit == PIX2:
-                pixarea_fac = 1. * PIX2
+                pixarea_fac = 1 * PIX2
             else:
                 pixarea = pixarea * (u.arcsec * u.arcsec / PIX2)
                 # NOTE: Sum already has npix value encoded, so we simply apply the npix unit here.
                 pixarea_fac = PIX2 * pixarea.to(display_solid_angle_unit / PIX2)
 
+            print('pixarea_fac', pixarea_fac)
+            print('final sum', phot_table['sum'])
             phot_table['sum'] = [rawsum * pixarea_fac]
         else:
             pixarea_fac = None
@@ -1272,7 +1279,6 @@ def _curve_of_growth(data, centroid, aperture, final_sum, wcs=None, background=0
         y_label = 'Value'
     else:
         y_label = sum_unit.to_string()
-        print('sum_arr.unit', sum_arr.unit, 'sum_unit', sum_unit)
         sum_arr = sum_arr.to_value(sum_unit, equivalencies)  # bqplot does not like Quantity
 
     return x_arr, sum_arr, x_label, y_label

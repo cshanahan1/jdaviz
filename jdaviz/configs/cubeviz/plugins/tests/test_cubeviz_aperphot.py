@@ -10,7 +10,7 @@ from regions import RectanglePixelRegion, PixCoord
 
 def test_cubeviz_aperphot_cube_orig_flux(cubeviz_helper, image_cube_hdu_obj_microns):
     cubeviz_helper.load_data(image_cube_hdu_obj_microns, data_label="test")
-    flux_unit = u.Unit("1E-17 erg*s^-1*cm^-2*Angstrom^-1")
+    flux_unit = u.Unit("1E-17 erg*s^-1*cm^-2*Angstrom^-1*pix^-2")
 
     aper = RectanglePixelRegion(center=PixCoord(x=1, y=2), width=3, height=5)
     cubeviz_helper.load_regions(aper)
@@ -88,7 +88,7 @@ def test_cubeviz_aperphot_cube_orig_flux(cubeviz_helper, image_cube_hdu_obj_micr
 
 def test_cubeviz_aperphot_generated_3d_gaussian_smooth(cubeviz_helper, image_cube_hdu_obj_microns):
     cubeviz_helper.load_data(image_cube_hdu_obj_microns, data_label="test")
-    flux_unit = u.Unit("1E-17 erg*s^-1*cm^-2*Angstrom^-1")
+    flux_unit = u.Unit("1E-17 erg*s^-1*cm^-2*Angstrom^-1*pix^-2")
 
     gauss_plg = cubeviz_helper.plugins["Gaussian Smooth"]._obj
     gauss_plg.mode_selected = "Spatial"
@@ -119,9 +119,15 @@ def test_cubeviz_aperphot_generated_3d_gaussian_smooth(cubeviz_helper, image_cub
     assert_quantity_allclose(row["slice_wave"], 4.894499866699333 * u.um)
 
 
-def test_cubeviz_aperphot_cube_orig_flux_mjysr(cubeviz_helper, spectrum1d_cube_custom_fluxunit):
-    cube = spectrum1d_cube_custom_fluxunit(fluxunit=u.MJy / u.sr)
+#@pytest.mark.parametrize("cube_unit", [u.MJy / u.sr, u.MJy, u.MJy / (u.pix*u.pix)])
+def test_cubeviz_aperphot_cube_sr_and_pix2(cubeviz_helper,
+                                           spectrum1d_cube_custom_fluxunit,
+                                           cube_unit=u.MJy / u.sr):
+    cube = spectrum1d_cube_custom_fluxunit(fluxunit=cube_unit)
     cubeviz_helper.load_data(cube, data_label="test")
+
+    from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
+    solid_angle_unit = check_if_unit_is_per_solid_angle(cube_unit, return_unit=True)
 
     aper = RectanglePixelRegion(center=PixCoord(x=3, y=1), width=1, height=1)
     bg = RectanglePixelRegion(center=PixCoord(x=2, y=0), width=1, height=1)
@@ -132,9 +138,24 @@ def test_cubeviz_aperphot_cube_orig_flux_mjysr(cubeviz_helper, spectrum1d_cube_c
     plg.aperture_selected = "Subset 1"
     plg.background_selected = "Subset 2"
 
-    # Make sure per steradian is handled properly.
     assert_allclose(plg.pixel_area, 0.01)
-    assert_allclose(plg.flux_scaling, 0.003631)
+
+    #  Check that the default flux scaling is present for MJy / sr cubes
+    if cube_unit == (u.MJy / u.sr):
+        assert_allclose(plg.flux_scaling, 0.003631)
+    else:
+        assert_allclose(plg.flux_scaling, 0.0)
+
+    # if cube is MJy / sr, set pixel area to 1 sr / pix2 so
+    # we can directly compare outputs between per sr and per pixel cubes, which
+    # will give the same results with this scaling
+    if cube_unit == (u.MJy / u.sr):
+        plg.pixel_area=1*(u.sr).to(u.arcsec*u.arcsec)
+    else:
+        # for per pixel cubes, set flux scaling to default for MJy / sr cubes
+        # so we can directly compare. this shouldn't be populated automatically,
+        # which is checked above
+        plg.flux_scaling = 0.003631
 
     plg.vue_do_aper_phot()
     row = cubeviz_helper.get_aperture_photometry_results()[0]
@@ -142,11 +163,17 @@ def test_cubeviz_aperphot_cube_orig_flux_mjysr(cubeviz_helper, spectrum1d_cube_c
     # Basically, we should recover the input rectangle here, minus background.
     assert_allclose(row["xcenter"], 3 * u.pix)
     assert_allclose(row["ycenter"], 1 * u.pix)
-    assert_allclose(row["sum"], 1.1752215e-12 * u.MJy)  # (15 - 10) MJy/sr x 2.3504431e-13 sr
+    assert_allclose(row["sum"], 5.0 * u.MJy)  # (15 - 10) MJy/sr x 1 sr
     assert_allclose(row["sum_aper_area"], 1 * (u.pix * u.pix))
-    assert_allclose(row["pixarea_tot"], 2.350443053909789e-13 * u.sr)
-    assert_allclose(row["aperture_sum_mag"], 23.72476627732448 * u.mag)
-    assert_allclose(row["mean"], 5 * (u.MJy / u.sr))
+
+    #  we forced area to be one sr so MJy / sr and MJy / pix2 gave the same result
+    assert_allclose(row["pixarea_tot"], 1.0 * u.sr)
+
+    # also forced flux_scaling to be the same for MJy / sr cubes, which get a
+    # default value populated, and MJy / pix2 which have a default of 0.0
+    assert_allclose(row["aperture_sum_mag"], -7.847359 * u.mag)
+
+    assert_allclose(row["mean"], 5 * (cube_unit))
     # TODO: check if slice plugin has value_unit set correctly
     assert_quantity_allclose(row["slice_wave"], 0.46236 * u.um)
 
