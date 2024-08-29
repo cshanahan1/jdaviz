@@ -73,6 +73,7 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
     display_flux_or_sb_unit = Unicode("").tag(sync=True)
     display_solid_angle_unit = Unicode("").tag(sync=True)
     flux_scaling_display_unit = Unicode("").tag(sync=True)
+    disable_pixarea_input = Bool(False).tag(sync=True)  # if flux/pix2
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -111,10 +112,11 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
         # Custom dataset filters for Cubeviz
         if self.config == "cubeviz":
             def valid_cubeviz_datasets(data):
+
                 comp = data.get_component(data.main_components[0])
                 img_unit = u.Unit(comp.units) if comp.units else u.dimensionless_unscaled
                 solid_angle_unit = check_if_unit_is_per_solid_angle(img_unit, return_unit=True)
-                if solid_angle_unit is None:  # this is encountered sometimes, not sure why.
+                if solid_angle_unit is None:  # this is encountered sometimes ??
                     return
 
                 # multiply out solid angle so we can check physical type of numerator
@@ -125,12 +127,8 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
                                     'spectral flux density',
                                     'photon flux density']
 
-                return ((data.ndim in (2, 3)) and (img_unit.physical_type in acceptable_types))
-
-
-                # return ((data.ndim in (2, 3)) and
-                #         ((img_unit == (u.MJy / u.sr)) or
-                #          (img_unit.physical_type in acceptable_types)))
+                return ((data.ndim in (2, 3)) and
+                        (img_unit.physical_type in acceptable_types))
 
             self.dataset.add_filter(valid_cubeviz_datasets)
             self.session.hub.subscribe(self, SliceValueUpdatedMessage,
@@ -245,6 +243,12 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
         fs_unit = self.app._get_display_unit('flux')
         self.flux_scaling_display_unit = fs_unit
 
+        # if cube loaded is per-pixel-squared sb (i.e flux cube loaded)
+        # pixel_area should be fixed to 1
+        if self.display_solid_angle_unit == 'pix2':
+            self.disable_pixarea_input = True
+            self.pixel_area = 1.0
+
 
     def _get_defaults_from_metadata(self, dataset=None):
         defaults = {}
@@ -352,8 +356,9 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
 
         # get correct display unit for newly selected dataset
         if self.config == 'cubeviz':
-            # set display_flux_or_sb_unit and flux_scaling_display_unit
+            # sets display_flux_or_sb_unit and flux_scaling_display_unit traitlets
             self._set_display_unit_of_selected_dataset()
+
 
         # auto-populate background, if applicable.
         self._aperture_selected_changed()
@@ -587,8 +592,9 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
                 background_value = (background_value * display_unit).to_value(
                     img_unit, u.spectral_density(self._cube_wave))
         else:
-            bg_reg = self.aperture._get_spatial_region(subset=background if background is not None else self.background.selected,  # noqa
-                                                       dataset=dataset if dataset is not None else self.dataset.selected)  # noqa
+            sub = background if background is not None else self.background.selected
+            dat = dataset if dataset is not None else self.dataset.selected
+            bg_reg = self.aperture._get_spatial_region(subset=sub, dataset=dat)
             background_value = self._calc_background_median(bg_reg, data=data)
 
             # cubeviz: computed background median will be in display units,
@@ -623,7 +629,8 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             ycenter = reg.center.y
             if data.coords is not None:
                 if self.config == "cubeviz" and data.ndim > 2:
-                    sky_center = w.pixel_to_world(self._cubeviz_slice_ind, ycenter, xcenter)[1]
+                    sky_center = w.pixel_to_world(self._cubeviz_slice_ind,
+                                                  ycenter, xcenter)[1]
                 else:  # "imviz"
                     sky_center = w.pixel_to_world(xcenter, ycenter)
             else:
@@ -692,7 +699,6 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             'biweight_location', 'biweight_midvariance', 'fwhm', 'semimajor_sigma',
             'semiminor_sigma', 'orientation', 'eccentricity'))  # Some cols excluded, add back as needed.  # noqa
         rawsum = phot_table['sum'][0]
-        print('rawsum', rawsum)
 
         if include_pixarea_fac:
 
@@ -707,8 +713,6 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
                 # NOTE: Sum already has npix value encoded, so we simply apply the npix unit here.
                 pixarea_fac = PIX2 * pixarea.to(display_solid_angle_unit / PIX2)
 
-            print('pixarea_fac', pixarea_fac)
-            print('final sum', phot_table['sum'])
             phot_table['sum'] = [rawsum * pixarea_fac]
         else:
             pixarea_fac = None

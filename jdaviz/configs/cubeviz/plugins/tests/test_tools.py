@@ -68,9 +68,9 @@ def test_spectrum_at_spaxel(cubeviz_helper, spectrum1d_cube_with_uncerts):
     assert uncert_viewer.toolbar.active_tool._mark.visible is True
 
 
-    
-@pytest.mark.parametrize("cube_type", ["Surface Brightness", "Flux"])        
-def test_spectrum_at_spaxel_altkey_true(cubeviz_helper, spectrum1d_cube, spectrum1d_cube_sb_unit, cube_type):
+@pytest.mark.parametrize("cube_type", ["Surface Brightness", "Flux"])    
+def test_spectrum_at_spaxel_altkey_true(cubeviz_helper, spectrum1d_cube,
+                                        spectrum1d_cube_sb_unit, cube_type):
 
     # test is parameterize to test a cube that is in Jy / sr (Surface Brightness)
     # as well as Jy (Flux), to test that flux cubes, which are converted in the
