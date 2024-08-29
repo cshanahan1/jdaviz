@@ -311,6 +311,7 @@ def _parse_hdulist(app, hdulist, file_name=None,
 
         else:  # flux
             # Forced wave unit conversion made it lose stuff, so re-add
+            print('setting flux.units to', sc.unit)
             app.data_collection[data_label].get_component("flux").units = sc.unit
             # Add flux to top left image viewer
             app.add_data_to_viewer(flux_viewer_reference_name, data_label)
