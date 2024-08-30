@@ -223,6 +223,8 @@ def test_cube_fitting_backend(cubeviz_helper, unc, tmp_path):
     assert isinstance(fitted_spectrum, Spectrum1D)
     assert len(fitted_spectrum.shape) == 3
     assert fitted_spectrum.shape == (IMAGE_SIZE_X, IMAGE_SIZE_Y, SPECTRUM_SIZE)
+
+    # since were not loading data into app, results are just u.Jy not u.Jy / pix2
     assert fitted_spectrum.flux.unit == u.Jy
     assert not np.all(fitted_spectrum.flux.value == 0)
 
@@ -273,7 +275,9 @@ def test_cube_fitting_backend(cubeviz_helper, unc, tmp_path):
     data_sci = cubeviz_helper.app.data_collection["fitted_cube.fits[SCI]"]
     flux_sci = data_sci.get_component("flux")
     assert_allclose(flux_sci.data, fitted_spectrum.flux.value)
-    assert flux_sci.units == flux_unit_str
+    # now that the flux cube was loaded into cubeviz, there will be a factor
+    # of pix2 applied to the flux unit
+    assert flux_sci.units == flux_unit_str + ' / pix2'
     coo = data_sci.coords.pixel_to_world(1, 0, 2)
     assert_allclose(coo[0].value, coo_expected[0].value)  # SpectralCoord
     assert_allclose([coo[1].ra.deg, coo[1].dec.deg],

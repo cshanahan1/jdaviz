@@ -1309,11 +1309,16 @@ class Application(VuetifyTemplate, HubListener):
                 if not sv_y_angle_unit:
                     if hasattr(self._jdaviz_helper, '_default_flux_viewer_reference_name'):
                         fv = self.get_viewer(self._jdaviz_helper._default_flux_viewer_reference_name)
-                    else:  # mosviz
-                        fv = self.get_viewer(self._jdaviz_helper._default_image_viewer_reference_name)
-                    fv_unit = fv.data()[0].get_object().flux.unit
-                    fv_angle_unit = check_if_unit_is_per_solid_angle(fv_unit,
-                                                                     return_unit=True)
+                        fv_unit = fv.data()[0].get_object().flux.unit
+                        fv_angle_unit = check_if_unit_is_per_solid_angle(fv_unit,
+                                                                         return_unit=True)
+
+                    else:
+                        # mosviz, not sure what to do here but can't access flux
+                        # viewer the same way. once we force the UC plugin to
+                        # exist this won't matter anyway because units can be
+                        # acessed from the plugin directly. assume u.sr for now
+                        fv_unit = u.sr
 
                 solid_angle_unit = sv_y_angle_unit or fv_angle_unit
 
@@ -1322,7 +1327,7 @@ class Application(VuetifyTemplate, HubListener):
                         return sv_y_unit * solid_angle_unit
                     return sv_y_unit
                 elif axis == 'sb':
-                    if sv_y_solid_angle_unit:
+                    if sv_y_angle_unit:
                         return sv_y_unit
                     return sv_y_unit / solid_angle_unit
             else:
@@ -1332,9 +1337,9 @@ class Application(VuetifyTemplate, HubListener):
             # translate options from uc.flux_or_sb to the prefix used in uc.??_unit_selected
             axis = {'Surface Brightness': 'sb', 'Flux': 'flux'}[uc.flux_or_sb_selected]
         try:
-            # # why is this returning non-sb units, before plugin is fully initialized because of messaging order?
-            # if axis == 'sb':
-            #     print('getting sb from UC plugin', getattr(uc, f'{axis}_unit_selected'))
+            # why is this returning non-sb units, before plugin is fully initialized because of messaging order?
+            if axis == 'sb':
+                print('getting sb from UC plugin', getattr(uc, f'{axis}_unit_selected'))
             return getattr(uc, f'{axis}_unit_selected')
         except AttributeError:
             raise ValueError(f"could not find display unit for axis='{axis}'")
