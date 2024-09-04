@@ -171,9 +171,8 @@ class UnitConversion(PluginTemplateMixin):
         # if the y-axis is set to surface brightness,
         # untranslatable units need to be removed from the flux choices
         if y_unit_solid_angle:
-            updated_flux_choices = list(set(create_flux_equivalencies_list(y_unit * y_unit_solid_angle, x_unit))
-                                        - set(units_to_strings(self._untranslatable_units)))
-            self.flux_unit.choices = updated_flux_choices
+            flux_choices = create_flux_equivalencies_list(y_unit * y_unit_solid_angle, x_unit)
+            self.flux_unit.choices = flux_choices
 
         # sets the angle unit drop down and the surface brightness read-only text
         if self.app.data_collection[0]:
