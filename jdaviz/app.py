@@ -1312,13 +1312,12 @@ class Application(VuetifyTemplate, HubListener):
                         fv_unit = fv.data()[0].get_object().flux.unit
                         fv_angle_unit = check_if_unit_is_per_solid_angle(fv_unit,
                                                                          return_unit=True)
-
                     else:
                         # mosviz, not sure what to do here but can't access flux
                         # viewer the same way. once we force the UC plugin to
                         # exist this won't matter anyway because units can be
                         # acessed from the plugin directly. assume u.sr for now
-                        fv_unit = u.sr
+                        fv_angle_unit = u.sr
 
                 solid_angle_unit = sv_y_angle_unit or fv_angle_unit
 
