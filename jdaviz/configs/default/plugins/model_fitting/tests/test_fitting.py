@@ -76,10 +76,24 @@ def test_model_ids(cubeviz_helper, spectral_cube_wcs):
 
 
 def test_parameter_retrieval(cubeviz_helper, spectral_cube_wcs):
+    # note: this test will change after JDAT-4758, get_model_parameters
+    # should return flux units if spectral y axis is in flux, not SB
+
+    flux_unit = u.nJy
+    sb_unit = flux_unit / (u.pix * u.pix)
+    wav_unit = u.Hz
+
     flux = np.ones((3, 4, 5))
     flux[2, 2, :] = [1, 2, 3, 4, 5]
-    cubeviz_helper.load_data(Spectrum1D(flux=flux * u.nJy, wcs=spectral_cube_wcs),
+    cubeviz_helper.load_data(Spectrum1D(flux=flux * flux_unit, wcs=spectral_cube_wcs),
                              data_label='test')
+
+    uc = cubeviz_helper.plugins['Unit Conversion']
+    # default should always be flux because of Sum spectral extraction
+    # after JDAT-4758, test this after translation and make sure outputs
+    # match flux/sb selection
+    assert uc.flux_or_sb.selected == 'Flux'
+
     plugin = cubeviz_helper.plugins["Model Fitting"]
     plugin.cube_fit = True
     plugin.create_model_component("Linear1D", "L")
@@ -90,14 +104,15 @@ def test_parameter_retrieval(cubeviz_helper, spectral_cube_wcs):
     params = cubeviz_helper.get_model_parameters()
     slope_res = np.zeros((3, 4))
     slope_res[2, 2] = 1.0
-    slope_res = slope_res * u.nJy / u.Hz
+
+    slope_res = slope_res * sb_unit / wav_unit
     intercept_res = np.ones((3, 4))
     intercept_res[2, 2] = 0
-    intercept_res = intercept_res * u.nJy
+    intercept_res = intercept_res * sb_unit
     assert_quantity_allclose(params['model']['slope'], slope_res,
-                             atol=1e-10 * u.nJy / u.Hz)
+                             atol=1e-10 * sb_unit / wav_unit)
     assert_quantity_allclose(params['model']['intercept'], intercept_res,
-                             atol=1e-10 * u.nJy)
+                             atol=1e-10 * sb_unit)
 
 
 @pytest.mark.parametrize('unc', ('zeros', None))
