@@ -69,7 +69,6 @@ ALL_JDAVIZ_CONFIGS = ['cubeviz', 'specviz', 'specviz2d', 'mosviz', 'imviz']
 @unit_converter('custom-jdaviz')
 class UnitConverterWithSpectral:
     def equivalent_units(self, data, cid, units):
-
         if cid.label == "flux":
             eqv = u.spectral_density(1 * u.m)  # Value does not matter here.
             list_of_units = set(list(map(str, u.Unit(units).find_equivalent_units(
@@ -81,7 +80,6 @@ class UnitConverterWithSpectral:
                     'erg / (s cm2 Angstrom)', 'erg / (s cm2 Angstrom)',
                     'erg / (s cm2 Hz)', 'erg / (Hz s cm2)',
                     'ph / (Angstrom s cm2)',
-                    'ph / (Hz s cm2)', 'ph / (Hz s cm2)',
                 ]
                 + [
                     'Jy / sr', 'mJy / sr', 'uJy / sr', 'MJy / sr',
@@ -94,9 +92,7 @@ class UnitConverterWithSpectral:
                     'W / (Hz pix2 m2)',
                     'eV / (Hz s pix2 m2)',
                     'erg / (s pix2 cm2)',
-                ]
-
-                )
+                ])
 
         else:  # spectral axis
             # prefer Hz over Bq and um over micron
@@ -111,7 +107,6 @@ class UnitConverterWithSpectral:
         # should return the converted values. Note that original_units
         # gives the units of the values array, which might not be the same
         # as the original native units of the component in the data.
-
         if cid.label == "flux":
             try:
                 spec = data.get_object(cls=Spectrum1D)
@@ -1294,7 +1289,6 @@ class Application(VuetifyTemplate, HubListener):
 
                 sv = self.get_viewer(self._jdaviz_helper._default_spectrum_viewer_reference_name)
                 sv_y_unit = sv.data()[0].flux.unit
-
                 if axis == 'spectral_y':
                     return sv_y_unit
 
@@ -1337,9 +1331,6 @@ class Application(VuetifyTemplate, HubListener):
             # translate options from uc.flux_or_sb to the prefix used in uc.??_unit_selected
             axis = {'Surface Brightness': 'sb', 'Flux': 'flux'}[uc.flux_or_sb_selected]
         try:
-            # why is this returning non-sb units before plugin is fully initialized?
-            if axis == 'sb':
-                print('getting sb from UC plugin', getattr(uc, f'{axis}_unit_selected'))
             return getattr(uc, f'{axis}_unit_selected')
         except AttributeError:
             raise ValueError(f"could not find display unit for axis='{axis}'")

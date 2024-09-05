@@ -21,7 +21,6 @@ calspec_url = "https://archive.stsci.edu/hlsps/reference-atlases/cdbs/current_ca
 
 
 def test_version_after_nddata_update(cubeviz_helper, spectrum1d_cube_with_uncerts):
-
     # Also test that plugin is disabled before data is loaded.
     plg = cubeviz_helper.plugins['Spectral Extraction']
     assert plg._obj.disabled_msg != ''
@@ -37,7 +36,7 @@ def test_version_after_nddata_update(cubeviz_helper, spectrum1d_cube_with_uncert
     collapsed_cube_nddata = spectral_cube.sum(axis=(0, 1))  # return NDDataArray
 
     # when going through jdaviz, cubes loaded in flux are converted to per-pixel-squared
-    # surface brightness, so muptiply by pix**2 to compare to NDData, if input
+    # surface brightness, so multiply by pix**2 to compare to NDData, if input
     # cube was in flux
     collapsed_cube_nddata = collapsed_cube_nddata * (u.pix ** 2)
 
