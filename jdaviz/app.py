@@ -94,7 +94,6 @@ class UnitConverterWithSpectral:
                     'eV / (Hz s pix2 m2)',
                     'erg / (s pix2 cm2)',
                 ])
-
         else:  # spectral axis
             # prefer Hz over Bq and um over micron
             exclude = {'Bq', 'micron'}
@@ -1281,13 +1280,10 @@ class Application(VuetifyTemplate, HubListener):
     def _get_display_unit(self, axis):
         if self._jdaviz_helper is None or self._jdaviz_helper.plugins.get('Unit Conversion') is None:  # noqa
             # fallback on native units (unit conversion is not enabled)
-
             if axis == 'spectral':
                 sv = self.get_viewer(self._jdaviz_helper._default_spectrum_viewer_reference_name)
                 return sv.data()[0].spectral_axis.unit
-
             elif axis in ('flux', 'sb', 'spectral_y'):
-
                 sv = self.get_viewer(self._jdaviz_helper._default_spectrum_viewer_reference_name)
                 sv_y_unit = sv.data()[0].flux.unit
                 if axis == 'spectral_y':
