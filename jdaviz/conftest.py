@@ -143,6 +143,7 @@ def spectrum1d_cube_wcs():
     wcs.wcs.set()
     return wcs
 
+
 @pytest.fixture
 def spectrum1d_cube_sb_unit():
     return _create_spectrum1d_cube_with_fluxunit(fluxunit=u.Jy / u.sr)

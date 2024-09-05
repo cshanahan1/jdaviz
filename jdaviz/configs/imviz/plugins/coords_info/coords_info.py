@@ -133,7 +133,6 @@ class CoordsInfo(TemplateMixin, DatasetSelectMixin):
 
             self.image_unit = u.Unit(image_unit)
 
-
     @property
     def marks(self):
         """

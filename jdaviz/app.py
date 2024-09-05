@@ -81,7 +81,7 @@ class UnitConverterWithSpectral:
                     'erg / (s cm2 Angstrom)', 'erg / (s cm2 Angstrom)',
                     'erg / (s cm2 Hz)', 'erg / (Hz s cm2)',
                     'ph / (Angstrom s cm2)',
-                    'ph / (Hz s cm2)', 'ph / (Hz s cm2)', 
+                    'ph / (Hz s cm2)', 'ph / (Hz s cm2)',
                 ]
                 + [
                     'Jy / sr', 'mJy / sr', 'uJy / sr', 'MJy / sr',
@@ -1308,7 +1308,8 @@ class Application(VuetifyTemplate, HubListener):
                 fv_angle_unit = None
                 if not sv_y_angle_unit:
                     if hasattr(self._jdaviz_helper, '_default_flux_viewer_reference_name'):
-                        fv = self.get_viewer(self._jdaviz_helper._default_flux_viewer_reference_name)
+                        vname = self._jdaviz_helper._default_flux_viewer_reference_name
+                        fv = self.get_viewer(vname)
                         fv_unit = fv.data()[0].get_object().flux.unit
                         fv_angle_unit = check_if_unit_is_per_solid_angle(fv_unit,
                                                                          return_unit=True)
@@ -1336,7 +1337,7 @@ class Application(VuetifyTemplate, HubListener):
             # translate options from uc.flux_or_sb to the prefix used in uc.??_unit_selected
             axis = {'Surface Brightness': 'sb', 'Flux': 'flux'}[uc.flux_or_sb_selected]
         try:
-            # why is this returning non-sb units, before plugin is fully initialized because of messaging order?
+            # why is this returning non-sb units before plugin is fully initialized?
             if axis == 'sb':
                 print('getting sb from UC plugin', getattr(uc, f'{axis}_unit_selected'))
             return getattr(uc, f'{axis}_unit_selected')

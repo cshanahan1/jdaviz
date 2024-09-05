@@ -387,6 +387,7 @@ def _eqv_pixar_sr(pixar_sr):
 
     return [(u.MJy / u.sr, u.MJy, converter_flux, iconverter_flux)]
 
+
 def _eqv_flux_to_sb_pixel(flux_unit):
     """
     Returns an Equivalency between `flux_unit` and `flux_unit`/pix**2. This
@@ -395,7 +396,7 @@ def _eqv_flux_to_sb_pixel(flux_unit):
     """
 
     pix2 = u.pix * u.pix
-    equiv = [(flux_unit, flux_unit / pix2, lambda x : x, lambda x : x)]
+    equiv = [(flux_unit, flux_unit / pix2, lambda x: x, lambda x: x)]
 
     return equiv
 
@@ -407,19 +408,18 @@ def _eqv_sb_per_pixel_to_per_angle(flux_unit, scale_factor=1):
     like Jy/pix**2 and Jy/sr. The scale factor is assumed to be in steradians,
     to follow the convention of the PIXAR_SR keyword.
 
-    Note: 
+    Note:
 
-    To allow conversions between units like 'ph / (Hz s cm2 sr)' and 
+    To allow conversions between units like 'ph / (Hz s cm2 sr)' and
     MJy / pix2, which would require this equivalency as well as u.spectral_density,
     these CAN'T be combined when converting like:
-    
+
     equivalencies=u.spectral_density(1 * u.m) + _eqv_sb_per_pixel_to_per_angle(u.Jy)
 
     So additional logic is needed to compare units that need both equivalencies
     (one solution being creating this equivalency for each equivalent flux-type.)
     """
     pix2 = u.pix * u.pix
-    pixel_scale = scale_factor
 
     # the two types of units we want to define a conversion between
     flux_solid_ang = flux_unit / u.sr

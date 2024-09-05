@@ -2,7 +2,7 @@ import numpy as np
 from astropy import units as u
 from traitlets import List, Unicode, observe, Bool
 
-from jdaviz.core.events import GlobalDisplayUnitChanged, SnackbarMessage
+from jdaviz.core.events import GlobalDisplayUnitChanged
 from jdaviz.core.registries import tray_registry
 from jdaviz.core.template_mixin import (PluginTemplateMixin, UnitSelectPluginComponent,
                                         SelectPluginComponent, PluginUserApi)
@@ -192,8 +192,7 @@ class UnitConversion(PluginTemplateMixin):
             if not self.flux_unit.selected:
                 y_display_unit = self.spectrum_viewer.state.y_display_unit
                 flux_unit_str = str(u.Unit(y_display_unit * y_unit_solid_angle))
-                self.flux_unit.selected = (str(u.Unit(y_display_unit * y_unit_solid_angle)))
-
+                self.flux_unit.selected = flux_unit_str
 
     @observe('spectral_unit_selected')
     def _on_spectral_unit_changed(self, *args):
@@ -270,7 +269,6 @@ class UnitConversion(PluginTemplateMixin):
             # care about this toggle selection
             self.hub.broadcast(GlobalDisplayUnitChanged("spectral_y", spectral_y, sender=self))
 
-
         if not check_if_unit_is_per_solid_angle(self.spectrum_viewer.state.y_display_unit):
             self.flux_or_sb_selected = 'Flux'
         else:
@@ -314,15 +312,6 @@ class UnitConversion(PluginTemplateMixin):
         selected_display_solid_angle_unit = u.Unit(self.angle_unit_selected)
         spec_axis_ang_unit = check_if_unit_is_per_solid_angle(spec_units)
 
-        # if the selected solid angle unit is square pixels,
-        # spectrum_viewer.state.y_display_unit doesn't understand units per sq pix.
-        # because converting betweet sq pix <> sq angle is not yet enabled, 
-
-        if selected_display_solid_angle_unit == u.pix**2:
-            pass
-
-
-
         # Surface Brightness -> Flux
         if spec_axis_ang_unit and flux_or_sb == 'Flux':
 
@@ -337,7 +326,6 @@ class UnitConversion(PluginTemplateMixin):
             self.spectrum_viewer.state.y_display_unit = str(spec_units)
         # entered the translator when we shouldn't translate
         else:
-
             return
 
         # broadcast that there has been a change in the spectrum viewer y axis,
@@ -360,7 +348,7 @@ class UnitConversion(PluginTemplateMixin):
 
     def _append_angle_correctly(self, flux_unit, angle_unit):
 
-        if angle_unit not in ['pix2', 'sr']:  # need to update this to be more flexible for solid angle or square pixel units
+        if angle_unit not in ['pix2', 'sr']:  # update here when adding more suppored sq angles
             self.sb_unit_selected = flux_unit
             return flux_unit
         if '(' in flux_unit:

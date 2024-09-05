@@ -579,27 +579,22 @@ class SpecvizProfileView(JdavizViewerMixin, BqplotProfileView):
         # something should always be returned for cubeviz/imviz since input is coerced to SB
         sb_unit = self.jdaviz_app._get_display_unit(axis='sb')
 
-        if sb_unit is not None:  # need to figure out what happens in specviz here, could sb_unit be None?
+        if sb_unit is not None:
             solid_angle_unit = check_if_unit_is_per_solid_angle(sb_unit, return_unit=True)
         else:
             solid_angle_unit = None
-
-        # self.session.hub.broadcast(SnackbarMessage(f"solid_angle_unit = {solid_angle_unit}", sender=self, color='error'))
 
         # if theres a solid angle or pixel in the unit, it will either be a surface brightness
         # if the numerator is a flux unit, or should be set to the catchall 'flux density' if
         # numerator is not a flux unit
         flux_unit_type = None
 
-        # self.session.hub.broadcast(SnackbarMessage(f"in viewers.py. y_unit = {y_unit}", sender=self, color='error'))
-        # self.session.hub.broadcast(SnackbarMessage(f"in viewers.py. solid_angle_unit = {solid_angle_unit}", sender=self, color='error'))
-
         if solid_angle_unit is not None:
-            locally_defined_sb_units = [unit / solid_angle_unit for unit in locally_defined_flux_units]
+            locally_defined_sb_units = [un / solid_angle_unit for un in locally_defined_flux_units]
 
-            angle_to_pixel_equivs = [_eqv_sb_per_pixel_to_per_angle(unit) for unit in locally_defined_flux_units]
+            angle_to_pixel_equivs = [_eqv_sb_per_pixel_to_per_angle(unit) for unit in locally_defined_flux_units]  # noqa
 
-            if any([y_unit.is_equivalent(unit, angle_to_pixel_equivs[i]) for i, unit in enumerate(locally_defined_sb_units)]):
+            if any([y_unit.is_equivalent(unit, angle_to_pixel_equivs[i]) for i, unit in enumerate(locally_defined_sb_units)]):  # noqa
                 flux_unit_type = "Surface Brightness"
 
         if flux_unit_type is None:  # if a label of SB or Flux density wasn't determined

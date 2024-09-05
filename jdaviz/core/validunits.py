@@ -140,7 +140,8 @@ def check_if_unit_is_per_solid_angle(unit, return_unit=False):
     """
     Check if a given u.Unit or unit string (that can be converted to
     a u.Unit object) represents some unit per solid angle. If 'return_unit'
-    is True, then the 
+    is True, then a u.Unit of the solid angle in `unit` will be returned (or
+    None if no solid angle is present in the denominator).
 
     Parameters
     ----------
@@ -207,4 +208,3 @@ def check_if_unit_is_per_solid_angle(unit, return_unit=False):
 
     # and if there are no area units, and return units were NOT requested.
     return False
-

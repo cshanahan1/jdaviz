@@ -121,7 +121,7 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
 
                 # multiply out solid angle so we can check physical type of numerator
                 img_unit *= solid_angle_unit
-            
+
                 acceptable_types = ['spectral flux density wav',
                                     'photon flux density wav',
                                     'spectral flux density',
@@ -249,7 +249,6 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
             self.disable_pixarea_input = True
             self.pixel_area = 1.0
 
-
     def _get_defaults_from_metadata(self, dataset=None):
         defaults = {}
         if dataset is None:
@@ -358,7 +357,6 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
         if self.config == 'cubeviz':
             # sets display_flux_or_sb_unit and flux_scaling_display_unit traitlets
             self._set_display_unit_of_selected_dataset()
-
 
         # auto-populate background, if applicable.
         self._aperture_selected_changed()
@@ -704,7 +702,7 @@ class SimpleAperturePhotometry(PluginTemplateMixin, ApertureSubsetSelectMixin,
 
             # convert pixarea, which is in arcsec2/pix2 to the display solid angle unit / pix2
             display_solid_angle_unit = u.Unit(self.display_solid_angle_unit)
-            
+
             # if angle unit is pix2, pixarea should be 1 pixel2 per pixel2
             if display_solid_angle_unit == PIX2:
                 pixarea_fac = 1 * PIX2
