@@ -80,6 +80,7 @@ class UnitConverterWithSpectral:
                     'erg / (s cm2 Angstrom)', 'erg / (s cm2 Angstrom)',
                     'erg / (s cm2 Hz)', 'erg / (Hz s cm2)',
                     'ph / (Angstrom s cm2)',
+                    'ph / (Hz s cm2)', 'ph / (Hz s cm2)'
                 ]
                 + [
                     'Jy / sr', 'mJy / sr', 'uJy / sr', 'MJy / sr',
