@@ -26,7 +26,8 @@ def test_markers_cubeviz(tmp_path, cubeviz_helper, spectrum1d_cube):
     cubeviz_helper.load_data(spectrum1d_cube, "test")
     fv = cubeviz_helper.app.get_viewer('flux-viewer')
     sv = cubeviz_helper.app.get_viewer('spectrum-viewer')
-    app_unit = 'Jy / pix2'  # cubes loaded in Jy become Jy / pix2
+    sb_unit = 'Jy / pix2'  # cubes loaded in Jy have sb unit of Jy / pix2
+    flux_unit = 'Jy'
 
     label_mouseover = cubeviz_helper.app.session.application._tools['g-coords-info']
 
@@ -42,7 +43,7 @@ def test_markers_cubeviz(tmp_path, cubeviz_helper, spectrum1d_cube):
                                         {'event': 'mousemove',
                                          'domain': {'x': 0, 'y': 0}})
 
-    assert label_mouseover.as_text() == (f'Pixel x=00.0 y=00.0 Value +8.00000e+00 {app_unit}',
+    assert label_mouseover.as_text() == (f'Pixel x=00.0 y=00.0 Value +8.00000e+00 {sb_unit}',
                                          'World 13h39m59.9731s +27d00m00.3600s (ICRS)',
                                          '204.9998877673 27.0001000000 (deg)')
 
@@ -61,7 +62,7 @@ def test_markers_cubeviz(tmp_path, cubeviz_helper, spectrum1d_cube):
                                                       'pixel_y': 0,
                                                       'pixel:unreliable': False,
                                                       'value': 8.0,
-                                                      'value:unit': app_unit,
+                                                      'value:unit': sb_unit,
                                                       'value:unreliable': False})
 
     mp._obj._on_viewer_key_event(fv, {'event': 'keydown',
@@ -76,9 +77,9 @@ def test_markers_cubeviz(tmp_path, cubeviz_helper, spectrum1d_cube):
                                         {'event': 'mousemove',
                                          'domain': {'x': 4.623e-7, 'y': 0}})
 
-    assert label_mouseover.as_text() == (f'Cursor 4.62300e-07, 0.00000e+00 Value +8.00000e+00 {app_unit}',
+    assert label_mouseover.as_text() == (f'Cursor 4.62300e-07, 0.00000e+00 Value +8.00000e+00 {sb_unit}',
                                          'Wave 4.62280e-07 m (0 pix)',
-                                         f'Flux 2.80000e+01 {app_unit}')
+                                         f'Flux 2.80000e+01 {flux_unit}')
     assert label_mouseover.as_dict() == {'data_label': 'Spectrum (sum)',
                                          'axes_x': 4.622800069238093e-07,
                                          'axes_x:unit': 'm',
@@ -86,9 +87,9 @@ def test_markers_cubeviz(tmp_path, cubeviz_helper, spectrum1d_cube):
                                          'spectral_axis': 4.622800069238093e-07,
                                          'spectral_axis:unit': 'm',
                                          'axes_y': 28.0,
-                                         'axes_y:unit': app_unit,
+                                         'axes_y:unit': flux_unit,
                                          'value': 28.0,
-                                         'value:unit': app_unit}
+                                         'value:unit': flux_unit}
 
     mp._obj._on_viewer_key_event(sv, {'event': 'keydown',
                                       'key': 'm'})
@@ -102,17 +103,17 @@ def test_markers_cubeviz(tmp_path, cubeviz_helper, spectrum1d_cube):
                                         {'event': 'mousemove',
                                          'domain': {'x': 4.623e-7, 'y': 0}})
 
-    assert label_mouseover.as_text() == (f'Cursor 4.62300e-07, 0.00000e+00 Value +8.00000e+00 {app_unit}',
+    assert label_mouseover.as_text() == (f'Cursor 4.62300e-07, 0.00000e+00 Value +8.00000e+00 {sb_unit}',
                                          '', '')
     assert label_mouseover.as_dict() == {'axes_x': 4.623e-07,
                                          'axes_x:unit': 'm',
                                          'axes_y': 0,
-                                         'axes_y:unit': app_unit,
+                                         'axes_y:unit': flux_unit,
                                          'data_label': '',
                                          'spectral_axis': 4.623e-07,
                                          'spectral_axis:unit': 'm',
                                          'value': 0,
-                                         'value:unit': {app_unit}}
+                                         'value:unit': flux_unit}
 
     mp._obj._on_viewer_key_event(sv, {'event': 'keydown',
                                       'key': 'm'})
