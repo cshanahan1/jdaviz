@@ -450,6 +450,7 @@ class ModelFitting(PluginTemplateMixin, DatasetSelectMixin,
         self._update_model_equation_default()
 
     def _initialize_model_component(self, model_comp, comp_label, poly_order=None):
+        print('in initialize model component')
         new_model = {"id": comp_label, "model_type": model_comp,
                      "parameters": [], "model_kwargs": {}}
         model_cls = MODELS[model_comp]
@@ -479,6 +480,8 @@ class ModelFitting(PluginTemplateMixin, DatasetSelectMixin,
                 # with jdaviz default units (based on x/y units) but need to
                 # convert the default parameter unit to these units
                 initial_val = default_param.quantity.to(default_units)
+                print('default param', default_param)
+                print('default units', default_units)
 
             initial_values[param_name] = initial_val
 
