@@ -450,8 +450,6 @@ class ModelFitting(PluginTemplateMixin, DatasetSelectMixin,
         self._update_model_equation_default()
 
     def _initialize_model_component(self, model_comp, comp_label, poly_order=None):
-        print(f'in initialize model component, model_comp={model_comp}, comp_label={comp_label}')
-
         new_model = {"id": comp_label, "model_type": model_comp,
                      "parameters": [], "model_kwargs": {}}
         model_cls = MODELS[model_comp]
@@ -471,7 +469,6 @@ class ModelFitting(PluginTemplateMixin, DatasetSelectMixin,
             default_param = getattr(model_cls, param_name, _EmptyParam(0))
             default_units = self._param_units(param_name,
                                               model_type=new_model["model_type"])
-            print(f'{param_name} default units', default_units)
 
             if default_param.unit is None:
                 # then the model parameter accepts unitless, but we want
@@ -885,7 +882,6 @@ class ModelFitting(PluginTemplateMixin, DatasetSelectMixin,
         return fitted_model, fitted_spectrum
 
     def _fit_model_to_cube(self, add_data):
-        print('in fit model to cube')
 
         if self._warn_if_no_equation():
             return

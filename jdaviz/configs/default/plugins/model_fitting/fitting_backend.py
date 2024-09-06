@@ -70,8 +70,6 @@ def fit_model_to_spectrum(spectrum, component_list, expression,
     initial_model = _build_model(component_list, expression)
 
     if len(spectrum.shape) > 1:
-        print('initial model', initial_model)
-        print('spectrum unit', spectrum.unit)
         return _fit_3D(initial_model, spectrum, window=window, n_cpu=n_cpu)
     else:
         return _fit_1D(initial_model, spectrum, run_fitter, window=window)
@@ -198,10 +196,7 @@ def _fit_3D(initial_model, spectrum, window=None, n_cpu=None):
                                   window=window,
                                   mask=spectrum.mask)
             r = pool.apply_async(worker, callback=collect_result)
-
-            print(f'fitting spectrum.flux {spectrum.flux.unit} spectral_axis {spectrum.spectral_axis} initial model {initial_model}')
             results.append(r)
-            print(f'result {r}')
         for r in results:
             r.wait()
 
