@@ -76,8 +76,6 @@ def test_model_ids(cubeviz_helper, spectral_cube_wcs):
 
 
 def test_parameter_retrieval(cubeviz_helper, spectral_cube_wcs):
-    # note: this test will change after JDAT-4758, get_model_parameters
-    # should return flux units if spectral y axis is in flux, not SB
 
     flux_unit = u.nJy
     sb_unit = flux_unit / (u.pix * u.pix)
@@ -88,14 +86,12 @@ def test_parameter_retrieval(cubeviz_helper, spectral_cube_wcs):
     cubeviz_helper.load_data(Spectrum1D(flux=flux * flux_unit, wcs=spectral_cube_wcs),
                              data_label='test')
 
-    uc = cubeviz_helper.plugins['Unit Conversion']
-    # default should always be flux because of Sum spectral extraction
-    # after JDAT-4758, test this after translation and make sure outputs
-    # match flux/sb selection
-    assert uc.flux_or_sb.selected == 'Flux'
-
     plugin = cubeviz_helper.plugins["Model Fitting"]
+
+    # since cube_fit is true, output fit should be in SB units
+    # even though the spectral y axis is in 'flux' by default
     plugin.cube_fit = True
+
     plugin.create_model_component("Linear1D", "L")
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', message='Model is linear in parameters.*')
