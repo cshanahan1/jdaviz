@@ -7,6 +7,7 @@ from astropy.nddata import NDDataArray, StdDevUncertainty
 from traitlets import Any, Bool, Dict, Float, List, Unicode, observe
 
 from jdaviz.core.custom_traitlets import FloatHandleEmpty
+from jdaviz.core.custom_units import _eqv_pixar_sr
 from jdaviz.core.events import SnackbarMessage, SliceValueUpdatedMessage, GlobalDisplayUnitChanged
 from jdaviz.core.marks import PluginLine
 from jdaviz.core.registries import tray_registry
@@ -23,7 +24,6 @@ from jdaviz.core.user_api import PluginUserApi
 from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
 from jdaviz.configs.cubeviz.plugins.parsers import _return_spectrum_with_correct_units
 from jdaviz.configs.cubeviz.plugins.viewers import WithSliceIndicator
-from jdaviz.utils import _eqv_pixar_sr
 
 
 __all__ = ['SpectralExtraction']

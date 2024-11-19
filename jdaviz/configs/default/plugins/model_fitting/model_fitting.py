@@ -7,6 +7,7 @@ from specutils import Spectrum1D
 from specutils.utils import QuantityModel
 from traitlets import Bool, List, Unicode, observe
 
+from jdaviz.core.custom_units import _eqv_flux_to_sb_pixel
 from jdaviz.core.events import SnackbarMessage, GlobalDisplayUnitChanged
 from jdaviz.core.registries import tray_registry
 from jdaviz.core.template_mixin import (PluginTemplateMixin,
@@ -25,7 +26,6 @@ from jdaviz.configs.default.plugins.model_fitting.fitting_backend import fit_mod
 from jdaviz.configs.default.plugins.model_fitting.initializers import (MODELS,
                                                                        initialize,
                                                                        get_model_parameters)
-from jdaviz.utils import _eqv_flux_to_sb_pixel
 
 __all__ = ['ModelFitting']
 

@@ -8,6 +8,7 @@ from specutils import Spectrum1D
 from traitlets import List, Unicode, observe, Bool
 
 from jdaviz.configs.default.plugins.viewers import JdavizProfileView
+from jdaviz.core.custom_units import _eqv_flux_to_sb_pixel, _eqv_pixar_sr
 from jdaviz.core.events import GlobalDisplayUnitChanged, AddDataMessage, SliceValueUpdatedMessage
 from jdaviz.core.registries import tray_registry
 from jdaviz.core.template_mixin import (PluginTemplateMixin, UnitSelectPluginComponent,
@@ -17,7 +18,6 @@ from jdaviz.core.validunits import (create_spectral_equivalencies_list,
                                     check_if_unit_is_per_solid_angle,
                                     create_angle_equivalencies_list,
                                     supported_sq_angle_units)
-from jdaviz.utils import _eqv_flux_to_sb_pixel, _eqv_pixar_sr
 
 __all__ = ['UnitConversion']
 
