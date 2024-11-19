@@ -6,7 +6,7 @@ from bqplot.marks import Lines, Label, Scatter
 from glue.core import HubListener
 from specutils import Spectrum1D
 
-from jdaviz.core.custom_units import _eqv_pixar_sr, _eqv_flux_to_sb_pixel
+from jdaviz.core.custom_units_and_equivs import _eqv_pixar_sr, _eqv_flux_to_sb_pixel
 from jdaviz.core.events import GlobalDisplayUnitChanged
 from jdaviz.core.events import (SliceToolStateMessage, LineIdentifyMessage,
                                 SpectralMarksChangedMessage,

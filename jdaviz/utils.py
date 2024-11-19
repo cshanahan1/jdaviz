@@ -26,8 +26,8 @@ from glue.core.subset import SubsetState, RangeSubsetState, RoiSubsetState
 from glue_astronomy.spectral_coordinates import SpectralCoordinates
 from ipyvue import watch
 
-from jdaviz.core.custom_units import PIX2, _eqv_pixar_sr, _eqv_flux_to_sb_pixel
-from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
+from jdaviz.core.custom_units_and_equivs import PIX2, _eqv_pixar_sr, _eqv_flux_to_sb_pixel
+from jdaviz.core.unit_conversion_utils import check_if_unit_is_per_solid_angle
 
 __all__ = ['SnackbarQueue', 'enable_hot_reloading', 'bqplot_clear_figure',
            'standardize_metadata', 'ColorCycler', 'alpha_index', 'get_subset_type',
@@ -326,7 +326,7 @@ def standardize_roman_metadata(data_model):
 
 
 def indirect_units():
-    from jdaviz.core.validunits import supported_sq_angle_units
+    from jdaviz.core.unit_conversion_utils import supported_sq_angle_units
 
     units = []
 

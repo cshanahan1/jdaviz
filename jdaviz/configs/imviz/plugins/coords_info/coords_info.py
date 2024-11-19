@@ -13,13 +13,13 @@ from jdaviz.configs.mosviz.plugins.viewers import (MosvizImageView, MosvizProfil
                                                    MosvizProfile2DView)
 from jdaviz.configs.rampviz.plugins.viewers import RampvizImageView, RampvizProfileView
 from jdaviz.configs.specviz.plugins.viewers import SpecvizProfileView
-from jdaviz.core.custom_units import PIX2, _eqv_pixar_sr
+from jdaviz.core.custom_units_and_equivs import PIX2, _eqv_pixar_sr
 from jdaviz.core.events import ViewerAddedMessage, GlobalDisplayUnitChanged
 from jdaviz.core.helpers import data_has_valid_wcs
 from jdaviz.core.marks import PluginScatter, PluginLine
 from jdaviz.core.registries import tool_registry
 from jdaviz.core.template_mixin import TemplateMixin, DatasetSelectMixin
-from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
+from jdaviz.core.unit_conversion_utils import check_if_unit_is_per_solid_angle
 from jdaviz.utils import flux_conversion
 
 __all__ = ['CoordsInfo']

@@ -1,7 +1,7 @@
 import astropy.units as u
 import pytest
 
-from jdaviz.core.validunits import check_if_unit_is_per_solid_angle
+from jdaviz.core.unit_conversion_utils import check_if_unit_is_per_solid_angle
 
 
 @pytest.mark.parametrize("unit, is_solid_angle", [

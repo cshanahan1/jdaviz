@@ -7,7 +7,7 @@ from specutils import Spectrum1D
 from specutils.utils import QuantityModel
 from traitlets import Bool, List, Unicode, observe
 
-from jdaviz.core.custom_units import _eqv_flux_to_sb_pixel
+from jdaviz.core.custom_units_and_equivs import _eqv_flux_to_sb_pixel
 from jdaviz.core.events import SnackbarMessage, GlobalDisplayUnitChanged
 from jdaviz.core.registries import tray_registry
 from jdaviz.core.template_mixin import (PluginTemplateMixin,
