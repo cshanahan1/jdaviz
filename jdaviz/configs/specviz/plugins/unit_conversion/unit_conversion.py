@@ -41,12 +41,10 @@ def _valid_glue_display_unit(unit_str, sv, axis='x'):
 def _flux_to_sb_unit(flux_unit, angle_unit):
     if angle_unit not in supported_sq_angle_units(as_strings=True):
         sb_unit = flux_unit
-    elif '(' in flux_unit:
-        pos = flux_unit.rfind(')')
-        sb_unit = flux_unit[:pos] + ' ' + angle_unit + flux_unit[pos:]
     else:
-        # append angle if there are no parentheses
-        sb_unit = flux_unit + ' / ' + angle_unit
+        # str > unit > str to remove formatting inconsistencies with
+        # parentheses/order of units/etc
+        sb_unit = (u.Unit(flux_unit) / u.Unit(angle_unit)).to_string()
 
     return sb_unit
 
