@@ -17,6 +17,7 @@ from jdaviz.core.template_mixin import (PluginTemplateMixin,
                                         SpectralContinuumMixin,
                                         skip_if_no_updates_since_last_active,
                                         with_spinner)
+from jdaviz.core.unit_conversion_utils import flux_conversion_general
 from jdaviz.core.user_api import PluginUserApi
 
 __all__ = ['MomentMap']
@@ -324,7 +325,18 @@ class MomentMap(PluginTemplateMixin, DatasetSelectMixin, SpectralSubsetSelectMix
         # convert units for moment 0, which is the only currently supported
         # moment for using converted units.
         if n_moment == 0:
-            self.moment = self.moment.to(self.moment_zero_unit)
+            x_unit = u.Unit(self.spectrum_viewer.state.x_display_unit)
+            # only flux<> flux conversions will occur, so we only
+            # need the spectral_density equivalency. should I just
+            # be using the mean wavelength here?
+            eqv = u.spectral_density(np.mean(slab.spectral_axis))
+
+            self.moment = flux_conversion_general(self.moment.value,
+                                                  u.Unit(self.moment.unit) / x_unit,
+                                                  u.Unit(self.moment_zero_unit) / x_unit,
+                                                  eqv, with_unit=True)
+
+            self.moment *= x_unit
 
         # Reattach the WCS so we can load the result
         self.moment = CCDData(self.moment, wcs=data_wcs)
