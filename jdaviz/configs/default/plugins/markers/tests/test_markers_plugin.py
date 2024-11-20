@@ -1,8 +1,11 @@
 import os
 
+import astropy.units as u
 import numpy as np
 from numpy.testing import assert_allclose
+import pytest
 
+from jdaviz.core.custom_units_and_equivs import PIX2, SPEC_PHOTON_FLUX_DENSITY_UNITS
 from jdaviz.core.marks import MarkersMark
 from jdaviz.configs.imviz.tests.utils import BaseImviz_WCS_NoWCS
 
@@ -176,6 +179,60 @@ def test_markers_cubeviz(tmp_path, cubeviz_helper, spectrum1d_cube):
     assert mp.export_table() is None
     assert len(_get_markers_from_viewer(fv).x) == 0
     assert len(_get_markers_from_viewer(sv).x) == 0
+
+@pytest.mark.parametrize("flux_angle_unit", [(u.Unit(x), u.sr) for x in SPEC_PHOTON_FLUX_DENSITY_UNITS] + [(u.Unit(x), PIX2) for x in SPEC_PHOTON_FLUX_DENSITY_UNITS])  # noqa
+def test_markers_cubeviz_flux_unit_conversion(cubeviz_helper,
+                                              spectrum1d_cube_custom_fluxunit,
+                                              flux_angle_unit):
+    """
+    Some basic tests for unit conversion are in `test_markers_cubeviz`,
+    but this tests unit conversion in the markers plugin for cubeviz more
+    thouroughly.
+    """
+    flux_unit, angle_unit = flux_angle_unit
+    cube_unit = flux_unit / angle_unit
+    flux_unit_str = flux_unit.to_string()
+
+    # load cube with specified unit
+    cube = spectrum1d_cube_custom_fluxunit(fluxunit=cube_unit, shape=(5, 5, 4),
+                                           with_uncerts=True)
+    cubeviz_helper.load_data(cube, data_label="test")
+
+    # get plugins
+    mp = cubeviz_helper.plugins['Markers']
+    uc = cubeviz_helper.plugins['Unit Conversion']._obj
+
+    mp.keep_active = True
+
+    fv = cubeviz_helper.app.get_viewer('flux-viewer')
+    label_mouseover = cubeviz_helper.app.session.application._tools['g-coords-info']
+    label_mouseover._viewer_mouse_event(fv,
+                                        {'event': 'mousemove',
+                                         'domain': {'x': 0, 'y': 0}})
+    mp._obj._on_viewer_key_event(fv, {'event': 'keydown',
+                                      'key': 'm'})
+
+    # test against all other available flux units
+    for new_flux_unit in SPEC_PHOTON_FLUX_DENSITY_UNITS:
+        if new_flux_unit != flux_unit_str:  # dont compare same units
+
+            # set to new unit
+            uc.flux_unit.selected = new_flux_unit
+            new_un = u.Unit(new_flux_unit)
+            new_cube_unit_str = (new_un / angle_unit).to_string()
+
+            # add a new marker at the same location
+            label_mouseover._viewer_mouse_event(fv,
+                                                {'event': 'mousemove',
+                                                 'domain': {'x': 0,
+                                                            'y': 0}})
+            mp._obj._on_viewer_key_event(fv, {'event': 'keydown',
+                                              'key': 'm'})
+            last_row = mp.export_table()[-1]
+            assert last_row['value:unit'] == new_cube_unit_str
+
+            # set back to original unit
+            uc.flux_unit.selected = flux_unit_str
 
 
 class TestImvizMultiLayer(BaseImviz_WCS_NoWCS):

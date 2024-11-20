@@ -507,6 +507,9 @@ class CoordsInfo(TemplateMixin, DatasetSelectMixin):
 
                 valid_physical_types = ["spectral flux density",
                                         "surface brightness",
+                                        "surface brightness wav",
+                                        "photon surface brightness wav",
+                                        "photon surface brightness",
                                         "power density/spectral flux density wav",
                                         "photon flux density wav",
                                         "photon flux density"]

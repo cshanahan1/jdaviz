@@ -138,7 +138,8 @@ class PluginMark:
                 cube_wave = self.x*self.xunit
                 equivs = all_flux_unit_conversion_equivs(pixar_sr, cube_wave)
 
-                y = flux_conversion_general(self.y, self.yunit, unit, equivs, with_unit=False)
+                y = flux_conversion_general(self.y, self.yunit, unit, equivs,
+                                            with_unit=False)
 
             self.y = y
 
