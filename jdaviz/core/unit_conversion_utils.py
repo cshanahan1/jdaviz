@@ -247,14 +247,14 @@ def create_equivalent_spectral_axis_units_list(spectral_axis_unit,
 def flux_conversion_general(values, original_unit, target_unit,
                             equivalencies=None, with_unit=True):
     """
-    Converts `values` from `original_unit` to `target_unit` using the provided 
+    Converts `values` from `original_unit` to `target_unit` using the provided
     `equivalencies` while handling special cases where direct unit conversion
     is not feasible. This function is designed to account for scenarios like
     conversions involving surface brightness per square pixel or requiring
     `u.spectral_density` equivalencies.
 
-    This function should be used for unit conversions in plugins instead of 
-    directly using Astropy's `unit.to()`, as it handles additional logic for 
+    This function should be used for unit conversions in plugins instead of
+    directly using Astropy's `unit.to()`, as it handles additional logic for
     special cases.
 
     Note: that this is a simplified version of `utils.flux_conversion`.
@@ -284,7 +284,7 @@ def flux_conversion_general(values, original_unit, target_unit,
     Raises
     ------
     `astropy.units.UnitConversionError`
-        If the conversion between `original_unit` and `target_unit` fails 
+        If the conversion between `original_unit` and `target_unit` fails
         despite the provided equivalencies.
 
     """
@@ -332,13 +332,13 @@ def flux_conversion_general(values, original_unit, target_unit,
 def handle_squared_flux_unit_conversions(value, original_unit=None,
                                          target_unit=None, equivalencies=None):
     """
-    Handles conversions between squared flux or surface brightness units 
-    that cannot be directly converted, even with the correct equivalencies. 
+    Handles conversions between squared flux or surface brightness units
+    that cannot be directly converted, even with the correct equivalencies.
 
-    This function is specifically designed to address cases where squared 
-    units, such as `(MJy/sr)**2` to `(Jy/sr)**2`, appear in contexts like 
-    variance columns of aperture photometry output tables. When additional 
-    equivalencies are required, direct conversion may fail, so this workaround
+    This function is specifically designed to address cases where squared
+    units, such as `(MJy/sr)**2` to `(Jy/sr)**2`, appear in contexts like
+    variance columns of aperture photometry output tables. When additional
+    equivalencies are required, direct conversion may fail, so this workaround.
     is required.
 
     Parameters

@@ -10,6 +10,8 @@ from astropy.wcs import WCS
 from numpy.testing import assert_allclose
 from specutils import SpectralRegion
 
+from jdaviz.core.custom_units_and_equivs import PIX2, SPEC_PHOTON_FLUX_DENSITY_UNITS
+
 
 @pytest.mark.parametrize("cube_type", ["Surface Brightness", "Flux"])
 def test_user_api(cubeviz_helper, spectrum1d_cube, spectrum1d_cube_sb_unit, cube_type):

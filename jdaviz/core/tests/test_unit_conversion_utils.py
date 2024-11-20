@@ -4,10 +4,11 @@ import numpy as np
 import pytest
 
 from jdaviz.core.custom_units_and_equivs import PIX2, SPEC_PHOTON_FLUX_DENSITY_UNITS
-from jdaviz.core.unit_conversion_utils import (check_if_unit_is_per_solid_angle,
+from jdaviz.core.unit_conversion_utils import (all_flux_unit_conversion_equivs,
+                                               check_if_unit_is_per_solid_angle,
                                                combine_flux_and_angle_units,
-                                               all_flux_unit_conversion_equivs,
-                                               flux_conversion_general)
+                                               flux_conversion_general,
+                                               handle_squared_flux_unit_conversions)
 
 
 @pytest.mark.parametrize("unit, is_solid_angle", [
@@ -32,6 +33,9 @@ def test_general_flux_conversion():
     in place of astropy.units.to() across the application to handle flux/sb unit
     conversions. This test ensures that all advertised conversions are supported
     and correct.
+
+    Also tests the `handle_squared_flux_unit_conversions` function, which is used
+    to convert units for the aperture photometry table.
     """
 
     # required equivalencies for all flux<>flux, flux<>sb, sb<>sb conversions
@@ -85,3 +89,9 @@ def test_general_flux_conversion():
         converted_value = flux_conversion_general([1], orig, targ, equivalencies)
         np.testing.assert_allclose(converted_value[0].value, truth)
         assert converted_value.unit == targ
+
+        # as a bonus, also test the function that converts squared flux units
+        # (relevant in aperture photometry)
+        sq = handle_squared_flux_unit_conversions(1, orig**2, targ**2, equivalencies)
+        np.testing.assert_allclose(sq.value, truth**2, rtol=1e-06)
+        assert sq.unit == targ ** 2
