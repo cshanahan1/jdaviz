@@ -7,7 +7,6 @@ from astropy.nddata import NDDataArray, StdDevUncertainty
 from traitlets import Any, Bool, Dict, Float, List, Unicode, observe
 
 from jdaviz.core.custom_traitlets import FloatHandleEmpty
-from jdaviz.core.custom_units_and_equivs import _eqv_pixar_sr
 from jdaviz.core.events import SnackbarMessage, SliceValueUpdatedMessage, GlobalDisplayUnitChanged
 from jdaviz.core.marks import PluginLine
 from jdaviz.core.registries import tray_registry
@@ -569,7 +568,7 @@ class SpectralExtraction(PluginTemplateMixin, ApertureSubsetSelectMixin,
 
         if extracted.flux.unit != self.spectrum_y_units:
 
-            eqv = all_flux_unit_conversion_equivs(self.dataset.selected_obj.meta.get('PIXAR_SR', 1.0),
+            eqv = all_flux_unit_conversion_equivs(self.dataset.selected_obj.meta.get('PIXAR_SR', 1.0),  # noqa
                                                   self.dataset.selected_obj.spectral_axis)
 
             return flux_conversion_general(extracted.flux.value, extracted.flux.unit,

@@ -633,10 +633,13 @@ class CoordsInfo(TemplateMixin, DatasetSelectMixin):
                 equivalencies = all_flux_unit_conversion_equivs(pixar_sr,
                                                                 sp.spectral_axis)
 
-                disp_flux = flux_conversion_general(sp.flux.value,
-                                                    sp.flux.unit,
-                                                    viewer.state.y_display_unit,
-                                                    equivalencies, with_unit=False)  # noqa: E501
+                if sp.flux.unit is not None and viewer.state.y_display_unit is not None:
+                    disp_flux = flux_conversion_general(sp.flux.value,
+                                                        sp.flux.unit,
+                                                        viewer.state.y_display_unit,
+                                                        equivalencies, with_unit=False)  # noqa: E501
+                else:
+                    disp_flux = sp.flux
 
                 # Out of range in spectral axis.
                 if (self.dataset.selected != lyr.layer.label and
