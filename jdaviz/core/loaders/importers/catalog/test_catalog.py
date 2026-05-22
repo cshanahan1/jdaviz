@@ -1,59 +1,60 @@
 
-from astropy.table import Table
+from astropy.table import QTable, Table
 from jdaviz.core.loaders.importers.catalog.catalog import CatalogImporter
-from jdaviz.utils import in_ra_comps, in_dec_comps
 import pytest
 
 
-@pytest.mark.parametrize("coordinate_name", ['ra', 'dec'])
-def test_coord_column(deconfigged_helper,
-                      sky_coord_only_source_catalog,
-                      coordinate_name):
-    """Test _guess_coord_cols for CatalogImporter: success and failure cases."""
-    resolver = deconfigged_helper.loaders['object']._obj
-    importer = CatalogImporter(app=deconfigged_helper._app,
-                               resolver=resolver, parser=None,
-                               input=sky_coord_only_source_catalog)
+def test_coord_column_detection(deconfigged_helper):
+    """
+    Test automatic detection of RA/Dec columns with various naming
+    conventions, and that non-coordinate columns are not misidentified as
+    coordinate columns (e.g 'radial' which contains 'ra' but should not be
+    identified as 'Ra').
+    """
 
-    variations_to_pass = [coordinate_name.upper(), coordinate_name + '_gaia',
-                          'source' + coordinate_name, 'world ' + coordinate_name]
+    # Variations of 'ra' and 'dec' that should be correctly identified as coordinate columns
+    ra_variations = ['rightascension', 'ra', 'radeg',
+                     'radegrees', 'rightascensiondegrees', 'rightascensiondeg',
+                     'raobj', 'objra', 'sourcera', 'rasource', 'raj2000', 'ra2000',
+                     'worldra', 'targra', 'scira']
+    dec_variations = ['declination', 'dec', 'decdeg',
+                      'decdegrees', 'declinationdegrees', 'declinationdeg',
+                      'decobj', 'objdec', 'decsource', 'sourcedec', 'decj2000',
+                      'dec2000', 'worlddec', 'targdec', 'scidec']
+
+    variations_to_pass = list(zip(ra_variations, dec_variations))
 
     for v in variations_to_pass:
-        this_table = sky_coord_only_source_catalog.copy()
-        this_table.rename_column(coordinate_name, v)
-        importer._input = this_table
-        assert importer._guess_coord_cols(coordinate_name)[0] == v
-        if coordinate_name == 'ra':
-            assert in_ra_comps(v)
-        elif coordinate_name == 'dec':
-            assert in_dec_comps(v)
+        ra, dec = v  # unpack RA and Dec column names
+        tab = QTable({ra: [10.0], dec: [-5.0]})
 
-    variations_to_fail = ['fluxradius', 'radial_velocity', 'decrement']
-    for v in variations_to_fail:
-        this_table = sky_coord_only_source_catalog.copy()
-        this_table.rename_column(coordinate_name, v)
-        importer._input = this_table
-        assert importer._guess_coord_cols(coordinate_name)[0] == '---'
-        if coordinate_name == 'ra':
-            assert not in_ra_comps(v)
-        elif coordinate_name == 'dec':
-            assert not in_dec_comps(v)
+        ldr = deconfigged_helper.loaders['object']
+        ldr.object = tab
+        ldr.format = 'Catalog'
+        importer = ldr.importer
 
-    # specifically test that 'right ascension' is read as an RA column and not as a Dec column
-    this_table = sky_coord_only_source_catalog.copy()
-    this_table.rename_column(coordinate_name, 'right ascension')
-    importer._input = this_table
-    if coordinate_name == 'ra':
-        assert importer._guess_coord_cols(coordinate_name)[0] == 'right ascension'
-    elif coordinate_name == 'dec':
-        assert importer._guess_coord_cols(coordinate_name)[0] == '---'
+        # make sure the coordinate columns were correctly identified
+        assert importer.col_ra == ra
+        assert importer.col_dec == dec
+
+    # check that certain strings that contain 'ra' and 'dec' substrings are not
+    # misidentified as coordinate columns
+    tab = QTable({'radial_velocity': [10.0], 'fluxradius': [5.0], 'decrement': [1.0]})
+    ldr = deconfigged_helper.loaders['object']
+    ldr.object = tab
+    ldr.format = 'Catalog'
+    importer = ldr.importer
+    # none of the column names in the input table should have been identified as RA or Dec columns,
+    # so they should be set as a placeholder value of '---'
+    assert importer.col_ra == '---'
+    assert importer.col_dec == '---'
 
 
 @pytest.mark.parametrize("pixel_name", ['x', 'y'])
 def test_pixel_column(deconfigged_helper,
                       sky_coord_only_source_catalog,
                       pixel_name):
-    '''Test _guess_coord_cols for CatalogImporter: success and failure cases.'''
+
     resolver = deconfigged_helper.loaders['object']._obj
     importer = CatalogImporter(app=deconfigged_helper._app,
                                resolver=resolver, parser=None,
