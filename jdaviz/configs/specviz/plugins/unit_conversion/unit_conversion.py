@@ -22,6 +22,7 @@ from jdaviz.core.unit_conversion_utils import (create_equivalent_spectral_axis_u
                                                check_if_unit_is_per_solid_angle,
                                                create_equivalent_angle_units_list,
                                                flux_to_sb_unit,
+                                               is_physical_flux_unit,
                                                is_physical_spectral_unit)
 
 __all__ = ['UnitConversion']
@@ -353,9 +354,9 @@ class UnitConversion(PluginTemplateMixin):
                 if (not len(self.spectral_y_type_selected)
                         and isinstance(viewer, JdavizProfileView)):
                     # set spectral_y_type_selected to 'Flux'
-                    # if the y-axis unit is not per solid angle
+                    # if the y-axis unit is not per solid angle or is non-physical (e.g. counts)
                     self.spectral_y_type.choices = ['Surface Brightness', 'Flux']
-                    if angle_unit is None:
+                    if angle_unit is None or not is_physical_flux_unit(flux_unit):
                         self.spectral_y_type_selected = 'Flux'
                     else:
                         self.spectral_y_type_selected = 'Surface Brightness'
@@ -531,6 +532,10 @@ class UnitConversion(PluginTemplateMixin):
 
         spectral_y_change = False
         for sv in self.spectrum_1d_viewers:
+            sv_yunit = sv.state.y_display_unit
+            # skip only if switching between incompatible types (physical <-> non-physical)
+            if sv_yunit and is_physical_flux_unit(yunit) != is_physical_flux_unit(sv_yunit):
+                continue
 
             if self.spectral_unit.selected != yunit:
                 spectral_y_change = True

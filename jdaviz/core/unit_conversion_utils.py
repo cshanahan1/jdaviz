@@ -256,6 +256,10 @@ def is_physical_flux_unit(flux_unit):
     equivalencies).  Non-physical units such as DN, counts, ADU, or
     ``dimensionless_unscaled`` return False.
 
+    Surface brightness units (flux per solid angle, e.g. MJy/sr) are handled
+    by stripping the solid angle component before checking, so that only the
+    flux numerator determines the result.
+
     Parameters
     ----------
     flux_unit : `~astropy.units.Unit` or str
@@ -268,6 +272,11 @@ def is_physical_flux_unit(flux_unit):
         unit = u.Unit(flux_unit)
     except Exception:
         return False
+    # strip solid angle from SB units (e.g. MJy/sr -> MJy) so that only
+    # the flux numerator is checked against physical flux density units
+    angle_unit = check_if_unit_is_per_solid_angle(unit, return_unit=True)
+    if angle_unit is not None:
+        unit = unit * angle_unit
     equiv = u.spectral_density(1 * u.m)
     for phys_unit in SPEC_PHOTON_FLUX_DENSITY_UNITS:
         if unit.is_equivalent(phys_unit, equiv):
