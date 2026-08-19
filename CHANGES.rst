@@ -109,6 +109,10 @@ New Features
 
 - Generate a Gaussian curve from Line Analysis plugin results and optionally add to the 1D Spectrum viewer. [#4374]
 
+- Initial addition of the Spectral Lines plugin, which provides tools for managing
+  and analyzing spectral line data, grouping these lines by components for easier
+  management and analysis. This plugin will eventually replace the Line Lists plugin. [#4375]
+
 Mosviz
 ^^^^^^
 
