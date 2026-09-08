@@ -445,6 +445,7 @@ def test_astroquery_jwst_hst(deconfigged_helper, telescope):
 
     ldr.treat_table_as_query = False
     assert 'Catalog' in ldr.format.choices
+    ldr.format = 'Catalog'
     ldr.load()
     assert len(deconfigged_helper._app.data_collection) == 1
 
