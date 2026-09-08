@@ -366,7 +366,7 @@ class ApplicationState(State):
 
     # PRs to add to changelog when removing dev_mos_loader dev-flag: 4375
     dev_spectral_lines_plugin = CallbackProperty(
-        True, docstring='Whether to enable developer mode for the Spectral Lines plugin')
+        False, docstring='Whether to enable developer mode for the Spectral Lines plugin')
 
     loader_items = ListCallbackProperty(
         docstring="List of loaders available to the application.")
