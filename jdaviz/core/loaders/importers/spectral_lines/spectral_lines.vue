@@ -21,15 +21,6 @@
       :api_hints_enabled="api_hints_enabled"
     ></plugin-select>
 
-    <plugin-select
-      :items="medium_items.map(i => i.label)"
-      v-model:selected="medium_selected"
-      label="Medium"
-      hint="Medium in which the spectral line positions are defined."
-      api_hint="ldr.importer.medium ="
-      :api_hints_enabled="api_hints_enabled"
-    ></plugin-select>
-
     <j-plugin-section-header>Select Additional Columns</j-plugin-section-header>
     <plugin-select
       :items="col_other_items.map(i => i.label)"
