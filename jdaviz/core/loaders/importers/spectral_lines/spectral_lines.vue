@@ -21,6 +21,15 @@
       :api_hints_enabled="api_hints_enabled"
     ></plugin-select>
 
+    <plugin-select
+      :items="linename_items.map(i => i.label)"
+      v-model:selected="linename_selected"
+      label="Line Name"
+      hint="Column containing the line names (optional)."
+      api_hint="ldr.importer.linename ="
+      :api_hints_enabled="api_hints_enabled"
+    ></plugin-select>
+
     <j-plugin-section-header>Select Additional Columns</j-plugin-section-header>
     <plugin-select
       :items="col_other_items.map(i => i.label)"

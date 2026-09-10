@@ -1559,7 +1559,7 @@ def _role_labels_from_meta(meta):
              '_jdaviz_loader_dec_col': None,
              '_jdaviz_loader_x_col': 'X',
              '_jdaviz_loader_y_col': 'Y',
-             '_jdaviz_id_col': 'ID'}
+             '_jdaviz_loader_id_col': 'ID'}
     return [
         name
         for meta_key, derived_name in pairs.items()
@@ -1907,7 +1907,7 @@ class JdavizTableViewer(JdavizViewerMixin, TableViewer):
             if meta:
                 for key in ('_jdaviz_loader_ra_col', '_jdaviz_loader_dec_col',
                             '_jdaviz_loader_x_col', '_jdaviz_loader_y_col',
-                            '_jdaviz_id_col'):
+                            '_jdaviz_loader_id_col'):
                     if meta.get(key) == old_name:
                         meta[key] = new_name
         self._update_component_permissions()
