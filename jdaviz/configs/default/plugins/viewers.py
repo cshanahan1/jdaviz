@@ -1559,14 +1559,16 @@ def _role_labels_from_meta(meta):
              '_jdaviz_loader_dec_col': None,
              '_jdaviz_loader_x_col': 'X',
              '_jdaviz_loader_y_col': 'Y',
-             '_jdaviz_loader_id_col': 'ID'}
+             '_jdaviz_loader_id_col': 'ID',
+             '_jdaviz_loader_linename_col': None,
+             '_jdaviz_loader_spectral_loc_col': None
+             }
     return [
         name
         for meta_key, derived_name in pairs.items()
         for name in (meta.get(meta_key), derived_name if meta_key in meta else None)
         if name
     ]
-
 
 @viewer_registry("table-viewer", label="table")
 class JdavizTableViewer(JdavizViewerMixin, TableViewer):
