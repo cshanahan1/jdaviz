@@ -112,6 +112,8 @@ New Features
 - Unify astroquery and VO reporting behavior. Both now show banners in the UI for the
   results of queries. This information can also be found in the logger. [#4369]
 
+- Fix issue where catalog datasets could not be deleted from scatter viewers when aligned by WCS. [#4389]
+
 Mosviz
 ^^^^^^
 
