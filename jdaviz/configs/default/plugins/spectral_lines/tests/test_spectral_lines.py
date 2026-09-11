@@ -80,6 +80,10 @@ def test_spectral_lines_components(deconfigged_helper, spectrum1d):
     assert plugin.line_table != ''
     line_data = deconfigged_helper._app.data_collection[plugin.line_table]
 
+    # and that it is correctly listed as a plugin-managed component column
+    assert '_jdaviz_plugin_component_column' in line_data.meta
+    assert 'observed wavelength:default' in line_data.meta['_jdaviz_plugin_component_column']
+
     def col(component_lbl):
         cid = plugin._get_data_component_id(line_data,
                                             f'observed wavelength:{component_lbl}')
@@ -105,6 +109,9 @@ def test_spectral_lines_components(deconfigged_helper, spectrum1d):
     assert plugin.component_redshift == 0
     assert_allclose(col('second'), rest_wav)
     assert_allclose(component_lines_field('obs'), rest_wav)
+
+    # and that it is correctly listed as a plugin-managed component column
+    assert 'observed wavelength:second' in line_data.meta['_jdaviz_plugin_component_column']
 
     # adjusting the redshift updates only the selected component's column
     # and its entries in component_lines
@@ -135,6 +142,10 @@ def test_spectral_lines_components(deconfigged_helper, spectrum1d):
     assert plugin.component_selected == 'renamed'
     assert plugin.component_redshift == 0.1
 
+    # the plugin-managed component column should also reflect the rename
+    assert 'observed wavelength:renamed' in line_data.meta['_jdaviz_plugin_component_column']
+    assert 'observed wavelength:second' not in line_data.meta['_jdaviz_plugin_component_column']
+
     # component_lines follows the rename, keeping the shifted values and
     # per-line visibility state
     assert component_lines_field('linename') == ['Ha', 'line2']
@@ -147,6 +158,9 @@ def test_spectral_lines_components(deconfigged_helper, spectrum1d):
     assert plugin.component_selected == 'default'
     assert plugin.component_redshift == 0
     assert_allclose(col('default'), rest_wav)
+
+    # the plugin-managed component column should no longer include the removed component
+    assert 'observed wavelength:renamed' not in line_data.meta['_jdaviz_plugin_component_column']
 
     # component_lines reflects the fallback to 'default', unshifted and visible
     assert_allclose(component_lines_field('obs'), rest_wav)
