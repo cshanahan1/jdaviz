@@ -2,6 +2,7 @@ import pytest
 from copy import deepcopy
 
 import numpy as np
+from astropy.nddata import NDData
 from astropy import units as u
 from astropy.wcs import WCS
 from specutils import Spectrum
