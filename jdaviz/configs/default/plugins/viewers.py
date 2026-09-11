@@ -1909,7 +1909,8 @@ class JdavizTableViewer(JdavizViewerMixin, TableViewer):
             if meta:
                 for key in ('_jdaviz_loader_ra_col', '_jdaviz_loader_dec_col',
                             '_jdaviz_loader_x_col', '_jdaviz_loader_y_col',
-                            '_jdaviz_loader_id_col'):
+                            '_jdaviz_loader_id_col', '_jdaviz_loader_linename_col',
+                            '_jdaviz_loader_spectral_loc_col'):
                     if meta.get(key) == old_name:
                         meta[key] = new_name
         self._update_component_permissions()
